@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
-import { createReadStream } from 'node:fs';
+import { createReadStream, writeFileSync } from 'node:fs';
 import { cp, mkdir, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -187,19 +187,36 @@ async function stagePublicData(): Promise<void> {
 const lootCoreBackend = (): Plugin => ({
   name: 'loot-core-backend',
   configureServer(server) {
-    const child: ChildProcess = spawn(
-      'yarn',
-      [
-        'vite',
-        'build',
-        '--config',
-        lootCoreConfig,
-        '--mode',
-        'development',
-        '--watch',
-      ],
-      { cwd: lootCoreRoot, stdio: 'inherit' },
-    );
+    // On some Windows setups `yarn` may not be a direct executable (corepack is used).
+    // Prefer `yarn` where available, otherwise invoke `corepack yarn ...` so the
+    // child process can run across environments without requiring a global yarn install.
+    // Create a small shim in the loot-core folder to reliably invoke yarn via
+    // corepack on Windows where `yarn` may not be directly in PATH for child
+    // processes. We spawn the shim directly so PATH resolution is not required.
+    let execCmd: string;
+    let execArgs: string[];
+    if (process.platform === 'win32') {
+      const shimPath = path.resolve(lootCoreRoot, 'yarn-cli.cmd');
+      try {
+        // write a simple .cmd that forwards all args to `corepack yarn`.
+        writeFileSync(shimPath, '@echo off\r\ncorepack yarn %*\r\n');
+      } catch (err) {
+        server.config.logger.warn(
+          `Could not write yarn shim at ${shimPath}: ${(err as Error).message}`,
+        );
+      }
+      // Execute the .cmd via cmd.exe /c to avoid spawn issues on Windows
+      execCmd = 'cmd.exe';
+      execArgs = ['/c', shimPath, 'vite', 'build', '--config', lootCoreConfig, '--mode', 'development', '--watch'];
+    } else {
+      execCmd = 'yarn';
+      execArgs = ['vite', 'build', '--config', lootCoreConfig, '--mode', 'development', '--watch'];
+    }
+
+    const child: ChildProcess = spawn(execCmd, execArgs, {
+      cwd: lootCoreRoot,
+      stdio: 'inherit',
+    });
     child.on('error', err => {
       server.config.logger.error(
         `loot-core backend failed to spawn: ${err.message}`,
@@ -220,10 +237,14 @@ const lootCoreBackend = (): Plugin => ({
       const stream = createReadStream(filePath);
       stream
         .on('open', () => {
+          // Ensure correct content type and cross-origin headers for
+          // SharedArrayBuffer and wasm streaming to work in modern browsers.
           res.setHeader(
             'Content-Type',
             CONTENT_TYPES[path.extname(filePath)] ?? 'application/octet-stream',
           );
+          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
           stream.pipe(res);
         })
         .on('error', () => next());

@@ -27,6 +27,60 @@ There are four ways to deploy Actual:
 
 Learn more in the [installation instructions docs](https://actualbudget.org/docs/install/).
 
+## Run From Source on Windows
+
+### Prerequisites
+
+- Git
+- Node.js 22 or newer (`node -v`)
+- Corepack (included with modern Node.js)
+
+### Step-by-step setup
+
+From a terminal (PowerShell recommended):
+
+```powershell
+git clone <REPOSITORY_URL>
+cd <CLONED_FOLDER>\actual
+
+corepack prepare yarn@4.13.0 --activate
+corepack yarn -v
+corepack yarn install
+```
+
+### Run the app on Windows
+
+Do not use `corepack yarn start` in plain Windows shells because it invokes a `sh` script.
+
+Use one of the following:
+
+1. Local-only frontend (no sync server):
+
+```powershell
+corepack yarn workspace @actual-app/web start --mode=browser
+```
+
+2. Frontend + sync server (open a second terminal):
+
+```powershell
+# Terminal 1
+corepack yarn workspace @actual-app/web start --mode=browser
+
+# Terminal 2
+corepack yarn workspace @actual-app/sync-server start
+```
+
+Open the URL printed by Vite (typically `http://localhost:3001`).
+
+### First-run choices
+
+- Local-only mode: choose "Don't use a server", then "Start fresh" or "Try Demo".
+- With server mode: create and confirm a password, then continue with "OK".
+
+### Stop everything
+
+In each terminal running a process, press `Ctrl+C`.
+
 ## Ready to Start Budgeting?
 
 Read about [Envelope budgeting](https://actualbudget.org/docs/getting-started/envelope-budgeting) to know more about the idea behind Actual Budget.

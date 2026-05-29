@@ -5,7 +5,6 @@
 </p>
 
 ## Imagen Referencial del funcionamiento 
-(https://actualbudget.org/docs/contributing/) 
 
 ## Para correrlo en Windows
 

@@ -12,8 +12,8 @@ Actual (también conocido como Actual Budget) es una herramienta de finanzas per
 ### Prerrequisitos
 
 - Git
-- Node.js 22 or newer (`node -v`)
-- Corepack (included with modern Node.js)
+- Node.js 22 o el más reciente (`node -v`)
+- Corepack (se incluye en el Node.js)
 
 ### Vamos paso a paso
 

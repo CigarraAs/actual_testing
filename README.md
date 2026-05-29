@@ -1,4 +1,5 @@
-# actual_testing
+# ¿Qué es Actual?
+Actual (también conocido como Actual Budget) es una herramienta de finanzas personales que se enfoca en la privacidad y el control de tus datos. Es 100% gratuita, de código abierto y opera bajo el principio "local-first" (primero local)
 
 <p align="center">
   <img src="/demo.png" alt="Actualbudget" />

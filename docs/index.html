@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Portal oficial y Dashboard de Calidad del Grupo 3 (Cigarras) para el proyecto de Pruebas de Software sobre Actual Budget (loot-core). EPIS UNSA.">
+  <title>Cigarras | Dashboard de Testing loot-core</title>
+
+  <!-- Google Fonts - Outfit for Headers, Inter for Body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #080b11;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #151d30 0%, #080b11 70%);
+      --card-bg: rgba(17, 24, 39, 0.55);
+      --card-border: rgba(255, 255, 255, 0.06);
+      --card-border-hover: rgba(6, 182, 212, 0.4);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --color-primary: #06b6d4;
+      /* Electric Cyan */
+      --color-secondary: #a855f7;
+      /* Neon Purple */
+      --color-success: #10b981;
+      /* Emerald Green */
+      --color-warning: #f59e0b;
+      /* Amber Yellow */
+      --color-danger: #ef4444;
+      /* Crimson Red */
+      --accent-gradient: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%);
+      --accent-gradient-hover: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Header Nav */
+    header {
+      background-color: rgba(8, 11, 17, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 1rem 0;
+      transition: var(--transition);
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+
+    .brand-logo span {
+      filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5));
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: var(--transition);
+      position: relative;
+      padding: 0.25rem 0;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent-gradient);
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 7rem 0 4rem 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge-course {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 1rem;
+      background-color: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 999px;
+      color: var(--color-primary);
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 1rem;
+      background-color: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 999px;
+      color: var(--color-secondary);
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #ffffff 30%, #a5f3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto 2.5rem auto;
+      font-weight: 300;
+    }
+
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1.75rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(6, 182, 212, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-gradient-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(6, 182, 212, 0.35);
+    }
+
+    .btn-secondary {
+      background-color: rgba(31, 41, 55, 0.5);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(55, 65, 81, 0.5);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Stats Section */
+    .stats-section {
+      padding: 2rem 0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--accent-gradient);
+      opacity: 0.5;
+    }
+
+    .stat-card:hover {
+      border-color: var(--card-border-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(6, 182, 212, 0.1);
+    }
+
+    .stat-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    /* Section Styles */
+    section {
+      padding: 5rem 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .section-header {
+      margin-bottom: 3.5rem;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-weight: 300;
+    }
+
+    /* Modules Grid */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+
+    .module-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .module-card:hover {
+      border-color: var(--card-border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(6, 182, 212, 0.08);
+    }
+
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+    }
+
+    .module-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      background-color: rgba(6, 182, 212, 0.1);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    .module-owner {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background-color: rgba(255, 255, 255, 0.04);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+    }
+
+    .module-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: #ffffff;
+    }
+
+    .module-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .module-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .file-tag {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: var(--color-secondary);
+      background-color: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(168, 85, 247, 0.15);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .strategy-box {
+      background-color: rgba(0, 0, 0, 0.15);
+      border-left: 3px solid var(--color-primary);
+      padding: 0.75rem 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.8rem;
+    }
+
+    .strategy-box strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .strategy-box span {
+      color: var(--text-muted);
+    }
+
+    /* Exclusions and Workarounds Section */
+    .dashboard-split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2rem;
+    }
+
+    .content-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .content-box h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .exclusion-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .exclusion-item {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .exclusion-item:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .exclusion-name {
+      font-family: monospace;
+      color: var(--color-danger);
+      background-color: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      text-align: center;
+      align-self: start;
+    }
+
+    .exclusion-desc h4 {
+      font-size: 0.9rem;
+      color: #ffffff;
+      margin-bottom: 0.2rem;
+    }
+
+    .exclusion-desc p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .workaround-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    .warning-alert {
+      background-color: rgba(245, 158, 11, 0.06);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    .warning-alert strong {
+      color: var(--color-warning);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .code-block {
+      background-color: #06090e;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* Scrum Sprints Section */
+    .sprints-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .sprint-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 1rem;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 1rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 10px;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .tab-btn:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background-color: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      color: var(--color-primary);
+    }
+
+    .tab-status {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .status-done {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--color-success);
+    }
+
+    .status-current {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: var(--color-warning);
+    }
+
+    .status-upcoming {
+      background-color: rgba(148, 163, 184, 0.1);
+      color: var(--text-muted);
+    }
+
+    .sprint-display {
+      min-height: 250px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .sprint-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .sprint-header-left h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      color: #ffffff;
+    }
+
+    .sprint-period {
+      font-size: 0.85rem;
+      color: var(--color-primary);
+      font-weight: 600;
+      background-color: rgba(6, 182, 212, 0.05);
+      border: 1px solid rgba(6, 182, 212, 0.15);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+    }
+
+    .sprint-description {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    .sprint-details {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    .checklist-container h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #ffffff;
+    }
+
+    .sprint-checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .checklist-item.checked {
+      color: var(--text-main);
+    }
+
+    .check-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    .check-icon.checked {
+      background-color: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--color-success);
+      color: var(--color-success);
+    }
+
+    .check-icon.pending {
+      background-color: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      color: transparent;
+    }
+
+    .sprint-cta-box {
+      background-color: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .sprint-cta-box p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Team Grid */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .team-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .team-card:hover {
+      border-color: rgba(168, 85, 247, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(168, 85, 247, 0.08);
+    }
+
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+    }
+
+    .team-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.2rem;
+    }
+
+    .team-card .role {
+      font-size: 0.8rem;
+      color: var(--color-primary);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .team-card .assignment {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 0.75rem;
+    }
+
+    .team-card .assignment strong {
+      color: var(--text-main);
+    }
+
+    .github-link {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-family: monospace;
+      background-color: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+
+    .github-link:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Footer */
+    footer {
+      background-color: #04060a;
+      padding: 4rem 0;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    footer p {
+      margin-bottom: 0.5rem;
+    }
+
+    footer .unsa {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* Keyframes */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .modules-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-split {
+        grid-template-columns: 1fr;
+      }
+
+      .sprint-details {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .team-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .sprint-tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .team-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn {
+        width: 100%;
+        max-width: 280px;
+      }
+    }
+
+    .repo-metadata-ribbon {
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .meta-item {
+      transition: var(--transition) !important;
+    }
+
+    .meta-item:hover {
+      transform: translateY(-1px);
+      filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+    }
+
+    /* Language Stats Bar & Tech Split */
+    .tech-grid-split {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1.75rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .languages-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: var(--transition);
+    }
+
+    .languages-card:hover {
+      border-color: rgba(6, 182, 212, 0.2);
+      box-shadow: 0 8px 30px rgba(6, 182, 212, 0.04);
+    }
+
+    .lang-bar {
+      display: flex;
+      height: 12px;
+      width: 100%;
+      border-radius: 6px;
+      overflow: hidden;
+      background-color: rgba(255, 255, 255, 0.05);
+      margin: 1.25rem 0 1.5rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .lang-segment {
+      height: 100%;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .lang-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .lang-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: default;
+      transition: var(--transition);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .lang-legend-item:hover {
+      color: #ffffff;
+      transform: translateY(-2px);
+      background-color: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.02);
+    }
+
+    .lang-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .lang-icon {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+    }
+
+    .framework-card {
+      transition: var(--transition);
+    }
+
+    .framework-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--color-primary) !important;
+      background-color: rgba(6, 182, 212, 0.05) !important;
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.12);
+    }
+
+    .framework-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+    }
+
+    .framework-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    @media (max-width: 992px) {
+      .tech-grid-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Modules Explorer Section */
+    .modules-explorer-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      margin-top: 1.5rem;
+    }
+
+    .modules-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 0.75rem;
+    }
+
+    .module-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.6rem 1.25rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 8px;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .module-tab-btn:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+    }
+
+    .module-tab-btn.active {
+      background-color: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      color: var(--color-primary);
+    }
+
+    .module-tab-btn.active.tab-excluded {
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: var(--color-danger);
+    }
+
+    /* Wide Submodule Rows Layout */
+    .submodules-list-wide {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .submodule-row-card {
+      display: grid;
+      grid-template-columns: 240px 160px 1fr 180px;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.65rem 1.25rem;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      transition: var(--transition);
+      text-align: left;
+    }
+
+    .submodule-row-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(6, 182, 212, 0.2);
+      transform: translateX(4px);
+    }
+
+    .submodule-row-card.excluded-row:hover {
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .submodule-row-path {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--color-primary);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .submodule-row-path.excluded-path {
+      color: var(--color-danger);
+    }
+
+    .domain-pill-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      width: fit-content;
+    }
+
+    .domain-pill-badge.domain-negocio {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.06);
+      border-color: rgba(56, 189, 248, 0.15);
+    }
+
+    .domain-pill-badge.domain-db {
+      color: #fb7185;
+      background: rgba(251, 113, 133, 0.06);
+      border-color: rgba(251, 113, 133, 0.15);
+    }
+
+    .domain-pill-badge.domain-sync {
+      color: #c084fc;
+      background: rgba(192, 132, 252, 0.06);
+      border-color: rgba(192, 132, 252, 0.15);
+    }
+
+    .domain-pill-badge.domain-api {
+      color: #34d399;
+      background: rgba(52, 211, 153, 0.06);
+      border-color: rgba(52, 211, 153, 0.15);
+    }
+
+    .domain-pill-badge.domain-soporte {
+      color: #f472b6;
+      background: rgba(244, 114, 182, 0.06);
+      border-color: rgba(244, 114, 182, 0.15);
+    }
+
+    .domain-pill-badge.domain-plataforma {
+      color: #fb923c;
+      background: rgba(251, 146, 60, 0.06);
+      border-color: rgba(251, 146, 60, 0.15);
+    }
+
+    .domain-pill-badge.domain-tipos {
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.06);
+      border-color: rgba(148, 163, 184, 0.15);
+    }
+
+    .submodule-row-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .submodule-row-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      justify-content: flex-end;
+    }
+
+    .submodule-file-tag {
+      font-size: 0.65rem;
+      font-family: monospace;
+      color: var(--color-secondary);
+      background-color: rgba(168, 85, 247, 0.05);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      border: 1px solid rgba(168, 85, 247, 0.1);
+    }
+
+    .submodule-badge.badge-excluded {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--color-danger);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    /* Submodule Filter Pills */
+    .submodule-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.35rem 0.85rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 20px;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .filter-pill:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .filter-pill.active {
+      background-color: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.3);
+      color: var(--color-primary);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.05);
+    }
+
+    @media (max-width: 900px) {
+      .submodule-row-card {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+
+      .submodule-row-files {
+        justify-content: flex-start;
+        margin-top: 0.25rem;
+      }
+
+      .modules-tabs {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .module-tab-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      /* Sprints Buttons and Actions */
+      .btn-sprint-action {
+        font-size: 0.85rem !important;
+        padding: 0.55rem 1rem !important;
+        text-decoration: none !important;
+        transition: var(--transition) !important;
+      }
+
+      .btn-sprint-action[disabled],
+      .btn-sprint-action.disabled {
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        color: var(--text-muted) !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header Nav -->
+  <header>
+    <div class="container nav-container">
+      <a href="#" class="brand-logo" id="nav-logo">
+        <span>🦟</span> Cigarras | Actual
+      </a>
+      <ul class="nav-links">
+        <li><a href="#dashboard" id="link-dashboard">Dashboard</a></li>
+        <li><a href="#modulos" id="link-modulos">Módulos</a></li>
+        <li><a href="#sprints" id="link-sprints">Roadmap Sprints</a></li>
+        <li><a href="#equipo" id="link-equipo">Equipo y Roles</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero-sec">
+    <div class="container">
+      <div class="badge-wrapper">
+        <div class="badge-course">🏫 EPIS - UNSA</div>
+        <div class="badge-group">🦟 Grupo 3 | Cigarras</div>
+      </div>
+      <h1>Plan de Pruebas de Software de Actual Budget</h1>
+      <p class="hero-subtitle">
+        Portal oficial de control de calidad para el núcleo financiero de <strong>Actual Budget</strong>. Automatización
+        rigurosa de pruebas unitarias, integración, sistema y aplicación
+      </p>
+      <div class="hero-buttons">
+        <a href="https://github.com/CigarraAs/actual_testing/wiki" class="btn btn-primary" id="btn-wiki" target="_blank"
+          rel="noopener noreferrer">Ver Wiki del Proyecto</a>
+        <a href="https://github.com/orgs/CigarraAs/projects/2" class="btn btn-secondary" id="btn-projects"
+          target="_blank" rel="noopener noreferrer">Tablero Kanban</a>
+        <a href="https://github.com/CigarraAs/actual_testing" class="btn btn-secondary" id="btn-repo"
+          target="_blank" rel="noopener noreferrer">Repositorio GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Dashboard Panel -->
+  <section id="dashboard" style="padding-top: 1rem;">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card" id="card-stat-1">
+          <div class="stat-number">58.44%</div>
+          <div class="stat-label">Cobertura Sentencias</div>
+        </div>
+        <div class="stat-card" id="card-stat-2">
+          <div class="stat-number">50.43%</div>
+          <div class="stat-label">Cobertura Ramas</div>
+        </div>
+        <div class="stat-card" id="card-stat-3">
+          <div class="stat-number">664 / 666</div>
+          <div class="stat-label">Pruebas Exitosas</div>
+        </div>
+        <div class="stat-card" id="card-stat-4">
+          <div class="stat-number">12,832</div>
+          <div class="stat-label">Sentencias Totales</div>
+        </div>
+      </div>
+
+
+      <!-- GitHub Metadata Ribbon -->
+      <div class="repo-metadata-ribbon"
+        style="margin-top: 2rem; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.5rem; padding: 0.85rem 2rem; background: linear-gradient(90deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0.01) 100%); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 50px; width: fit-content; margin-left: auto; margin-right: auto;">
+        <div class="meta-item"
+          style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; color: var(--text-main); font-weight: 500; cursor: default;">
+          <span style="font-size: 1.05rem;">👤</span> Creador: <strong style="color: #ffffff;">James Long
+            (ex-Mozilla)</strong>
+        </div>
+        <div style="width: 1px; height: 16px; background-color: rgba(255, 255, 255, 0.1);"></div>
+        <div class="meta-item"
+          style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; color: var(--text-main); font-weight: 500; cursor: default;">
+          <span style="font-size: 1.05rem;">👥</span> Comunidad: <strong style="color: #ffffff;">633
+            Colaboradores</strong>
+        </div>
+        <div style="width: 1px; height: 16px; background-color: rgba(255, 255, 255, 0.1);"></div>
+        <div class="meta-item"
+          style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; color: var(--text-main); font-weight: 500; cursor: default;">
+          <span style="font-size: 1.05rem;">📄</span> Licencia: <strong style="color: #ffffff;">MIT</strong>
+        </div>
+        <div style="width: 1px; height: 16px; background-color: rgba(255, 255, 255, 0.1);"></div>
+        <div class="meta-item"
+          style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; color: var(--text-main); font-weight: 500; cursor: default;">
+          <span
+            style="font-size: 1.05rem; color: var(--color-warning); filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));">⭐</span>
+          Popularidad: <strong style="color: #ffffff;">26.7k Stars</strong>
+        </div>
+      </div>
+
+      <!-- Sección: Estructura Tecnológica del Core -->
+      <div class="tech-stack-section" style="margin-top: 3.5rem; animation: fadeIn 1s ease-out;">
+        <h3
+          style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2rem; font-weight: 700; color: #ffffff; text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+          Estructura Tecnológica y Lenguajes de loot-core
+        </h3>
+
+        <div class="tech-grid-split">
+
+          <!-- Col 1: Lenguajes (Dynamic GitHub stats) -->
+          <div class="languages-card">
+            <h4
+              style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #ffffff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+              Lenguajes del Proyecto (Datos en Vivo)
+            </h4>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+              Composición exacta del código fuente extraída del repositorio original <code>actualbudget/actual</code>.
+            </p>
+
+            <div class="lang-bar" id="lang-bar-progress">
+              <!-- Animated segments added dynamically -->
+            </div>
+
+            <div class="lang-legend" id="lang-bar-legend">
+              <!-- Legend items added dynamically -->
+            </div>
+          </div>
+
+          <!-- Col 2: Frameworks y Tecnologías Core -->
+          <div style="display: flex; flex-direction: column;">
+            <div
+              style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 1.5rem; height: 100%; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
+              <div>
+                <h4
+                  style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #ffffff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                  Frameworks & Plataformas
+                </h4>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                  Entornos y bibliotecas principales del monorepo financiero.
+                </p>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <!-- React -->
+                <div class="framework-card"
+                  style="padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;">
+                  <div class="framework-logo">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg"
+                      alt="React" style="filter: drop-shadow(0 0 4px rgba(97,218,251,0.25));" />
+                  </div>
+                  <div class="framework-info">
+                    <h5
+                      style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 700; color: #ffffff; margin: 0;">
+                      React</h5>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Frontend UI</span>
+                  </div>
+                </div>
+
+                <!-- Node.js -->
+                <div class="framework-card"
+                  style="padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;">
+                  <div class="framework-logo">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/nodejs/nodejs-original.svg"
+                      alt="Node.js" />
+                  </div>
+                  <div class="framework-info">
+                    <h5
+                      style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 700; color: #ffffff; margin: 0;">
+                      Node.js</h5>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Servidor Core</span>
+                  </div>
+                </div>
+
+                <!-- SQLite -->
+                <div class="framework-card"
+                  style="padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;">
+                  <div class="framework-logo">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original.svg"
+                      alt="SQLite" />
+                  </div>
+                  <div class="framework-info">
+                    <h5
+                      style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 700; color: #ffffff; margin: 0;">
+                      SQLite</h5>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Persistencia local</span>
+                  </div>
+                </div>
+
+                <!-- Electron -->
+                <div class="framework-card"
+                  style="padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;">
+                  <div class="framework-logo">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/electron/electron-original.svg"
+                      alt="Electron" style="filter: drop-shadow(0 0 4px rgba(71,118,230,0.2));" />
+                  </div>
+                  <div class="framework-info">
+                    <h5
+                      style="font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 700; color: #ffffff; margin: 0;">
+                      Electron</h5>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Desktop app</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+  </section>
+
+  <!-- Modules & Coverage Section -->
+  <section id="modulos">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Estructura y Cobertura de Módulos (loot-core)</h2>
+        <p class="section-subtitle">Radiografía completa de los dominios y componentes evaluados y excluidos del núcleo
+          financiero</p>
+      </div>
+
+      <div class="modules-explorer-container">
+        <div class="modules-tabs">
+          <button class="module-tab-btn active" onclick="switchModuleTab('valid')" id="btn-tab-valid">
+            Módulos Evaluados (Bajo Prueba)
+          </button>
+          <button class="module-tab-btn" onclick="switchModuleTab('ignored')" id="btn-tab-ignored">
+            Módulos Excluidos (Omitidos)
+          </button>
+        </div>
+
+        <!-- Tab content 1: Módulos Evaluados -->
+        <div id="module-content-valid" style="display: block;">
+          <!-- Filter Pills for Evaluated Modules -->
+          <div class="submodule-filters">
+            <button class="filter-pill active" onclick="filterSubmodules('all')" id="pill-all">Todos</button>
+            <button class="filter-pill" onclick="filterSubmodules('negocio')" id="pill-negocio">Core & Negocio</button>
+            <button class="filter-pill" onclick="filterSubmodules('db')" id="pill-db">Persistencia & BD</button>
+            <button class="filter-pill" onclick="filterSubmodules('sync')" id="pill-sync">Sincronización</button>
+            <button class="filter-pill" onclick="filterSubmodules('api')" id="pill-api">Servicios & APIs</button>
+          </div>
+
+          <div class="submodules-list-wide">
+            <!-- Core & Negocio -->
+            <div class="submodule-row-card" data-domain="negocio">
+              <span class="submodule-row-path">src/server/budget/</span>
+              <span class="domain-pill-badge domain-negocio">Core & Negocio</span>
+              <p class="submodule-row-desc">Cálculos de presupuesto, metas, carryover y sobres.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">envelope.ts</span>
+                <span class="submodule-file-tag">tracking.ts</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="negocio">
+              <span class="submodule-row-path">src/server/rules/</span>
+              <span class="domain-pill-badge domain-negocio">Core & Negocio</span>
+              <p class="submodule-row-desc">Motor de validación y reglas para transacciones.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">action.ts</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="negocio">
+              <span class="submodule-row-path">src/server/schedules/</span>
+              <span class="domain-pill-badge domain-negocio">Core & Negocio</span>
+              <p class="submodule-row-desc">Planificación de cobros, pagos y recurrencias.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">app.ts</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="negocio">
+              <span class="submodule-row-path">src/shared/</span>
+              <span class="domain-pill-badge domain-negocio">Core & Negocio</span>
+              <p class="submodule-row-desc">Utilidades comunes de fechas, números y monedas.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">months.ts</span>
+                <span class="submodule-file-tag">util.ts</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="negocio">
+              <span class="submodule-row-path">src/server/spreadsheet/</span>
+              <span class="domain-pill-badge domain-negocio">Core & Negocio</span>
+              <p class="submodule-row-desc">Motor reactivo de celdas y lógica financiera.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+
+            <!-- Persistencia & BD -->
+            <div class="submodule-row-card" data-domain="db">
+              <span class="submodule-row-path">src/server/db/</span>
+              <span class="domain-pill-badge domain-db">Persistencia & BD</span>
+              <p class="submodule-row-desc">Operaciones CRUD y utilidades de base de datos.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">index.ts</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="db">
+              <span class="submodule-row-path">src/server/aql/</span>
+              <span class="domain-pill-badge domain-db">Persistencia & BD</span>
+              <p class="submodule-row-desc">Compilador y ejecutor de consultas SQL en memoria.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">schema/</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="db">
+              <span class="submodule-row-path">src/server/migrate/</span>
+              <span class="domain-pill-badge domain-db">Persistencia & BD</span>
+              <p class="submodule-row-desc">Gestor y ejecutor de migraciones de base de datos.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="db">
+              <span class="submodule-row-path">src/server/forecast/</span>
+              <span class="domain-pill-badge domain-db">Persistencia & BD</span>
+              <p class="submodule-row-desc">Proyecciones matemáticas y análisis de saldos.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+
+            <!-- Sincronización -->
+            <div class="submodule-row-card" data-domain="sync">
+              <span class="submodule-row-path">src/server/sync/</span>
+              <span class="domain-pill-badge domain-sync">Sincronización</span>
+              <p class="submodule-row-desc">Sincronización distribuida CRDT y marcas de tiempo HLC.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="sync">
+              <span class="submodule-row-path">src/server/budgetfiles/</span>
+              <span class="domain-pill-badge domain-sync">Sincronización</span>
+              <p class="submodule-row-desc">Gestión y exportación de respaldos en formato ZIP.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+
+            <!-- Servicios & APIs -->
+            <div class="submodule-row-card" data-domain="api">
+              <span class="submodule-row-path">src/server/accounts/</span>
+              <span class="domain-pill-badge domain-api">Servicios & APIs</span>
+              <p class="submodule-row-desc">Conexiones seguras con APIs de bancos externos.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="api">
+              <span class="submodule-row-path">src/server/transactions/</span>
+              <span class="domain-pill-badge domain-api">Servicios & APIs</span>
+              <p class="submodule-row-desc">Importador y procesador de extractos bancarios.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">import/</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="api">
+              <span class="submodule-row-path">src/server/auth/</span>
+              <span class="domain-pill-badge domain-api">Servicios & APIs</span>
+              <p class="submodule-row-desc">Mecanismos de autenticación y cifrado de base de datos.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="api">
+              <span class="submodule-row-path">src/server/preferences/</span>
+              <span class="domain-pill-badge domain-api">Servicios & APIs</span>
+              <p class="submodule-row-desc">Carga y persistencia de ajustes de sesión del usuario.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">-</span>
+              </div>
+            </div>
+            <div class="submodule-row-card" data-domain="api">
+              <span class="submodule-row-path">Otros submódulos</span>
+              <span class="domain-pill-badge domain-api">Servicios & APIs</span>
+              <p class="submodule-row-desc">Controladores de notas, etiquetas y beneficiarios.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-file-tag">notes/</span>
+                <span class="submodule-file-tag">tags/</span>
+                <span class="submodule-file-tag">payees/</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab content 2: Módulos Omitidos -->
+        <div id="module-content-ignored" style="display: none;">
+          <div class="submodules-list-wide">
+            <!-- Soporte & Mocks -->
+            <div class="submodule-row-card excluded-row">
+              <span class="submodule-row-path excluded-path">src/mocks/</span>
+              <span class="domain-pill-badge domain-soporte">Soporte & Mocks</span>
+              <p class="submodule-row-desc">Generadores de datos simulados para entornos de test.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-badge badge-excluded">Excluido</span>
+              </div>
+            </div>
+            <div class="submodule-row-card excluded-row">
+              <span class="submodule-row-path excluded-path">src/server/tests/</span>
+              <span class="domain-pill-badge domain-soporte">Soporte & Mocks</span>
+              <p class="submodule-row-desc">Servidores simulados para pruebas de integración.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-badge badge-excluded">Excluido</span>
+              </div>
+            </div>
+
+            <!-- Adaptador Plataforma -->
+            <div class="submodule-row-card excluded-row">
+              <span class="submodule-row-path excluded-path">src/platform/</span>
+              <span class="domain-pill-badge domain-plataforma">Adaptador Plataforma</span>
+              <p class="submodule-row-desc">Adaptadores de sistema para filesystem y base de datos.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-badge badge-excluded">Excluido</span>
+              </div>
+            </div>
+
+            <!-- Tipos & CLI Tools -->
+            <div class="submodule-row-card excluded-row">
+              <span class="submodule-row-path excluded-path">src/types/</span>
+              <span class="domain-pill-badge domain-tipos">Tipos & CLI Tools</span>
+              <p class="submodule-row-desc">Definiciones de tipo TypeScript para el monorepo.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-badge badge-excluded">Excluido</span>
+              </div>
+            </div>
+            <div class="submodule-row-card excluded-row">
+              <span class="submodule-row-path excluded-path">src/server/tools/</span>
+              <span class="domain-pill-badge domain-tipos">Tipos & CLI Tools</span>
+              <p class="submodule-row-desc">Scripts internos de terminal para desarrollo.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-badge badge-excluded">Excluido</span>
+              </div>
+            </div>
+            <div class="submodule-row-card excluded-row">
+              <span class="submodule-row-path excluded-path">migrations/</span>
+              <span class="domain-pill-badge domain-tipos">Tipos & CLI Tools</span>
+              <p class="submodule-row-desc">Scripts SQL estáticos para inicialización de tablas.</p>
+              <div class="submodule-row-files">
+                <span class="submodule-badge badge-excluded">Excluido</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sprints Roadmap Section -->
+  <section id="sprints">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Roadmap de Sprints y Entregables</h2>
+        <p class="section-subtitle">Planificación e hitos de control de calidad para el proyecto</p>
+      </div>
+
+      <div class="sprints-container">
+        <div class="sprint-tabs">
+          <button class="tab-btn active" id="btn-sprint-1" onclick="switchSprint(1)">
+            <span>Sprint 1</span>
+            <span class="tab-status status-done">Completado</span>
+          </button>
+          <button class="tab-btn" id="btn-sprint-2" onclick="switchSprint(2)">
+            <span>Sprint 2</span>
+            <span class="tab-status status-upcoming">Próximo</span>
+          </button>
+          <button class="tab-btn" id="btn-sprint-3" onclick="switchSprint(3)">
+            <span>Sprint 3</span>
+            <span class="tab-status status-upcoming">Próximo</span>
+          </button>
+          <button class="tab-btn" id="btn-sprint-4" onclick="switchSprint(4)">
+            <span>Sprint 4</span>
+            <span class="tab-status status-upcoming">Próximo</span>
+          </button>
+        </div>
+
+        <div class="sprint-display" id="sprint-info-area">
+          <!-- Cargar dinámicamente mediante switchSprint -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team Section -->
+  <section id="equipo">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">El Escuadrón Cigarra (Grupo 3)</h2>
+        <p class="section-subtitle">Roles de ingeniería asignados al equipo de control de calidad</p>
+      </div>
+
+      <div class="team-grid" style="margin-bottom: 3rem;">
+        <!-- Member 1 -->
+        <div class="team-card" id="t-card-1">
+          <div class="member-avatar">CF</div>
+          <h3>Calcina Flores, Franco</h3>
+          <div class="role">Alineamiento y Verificación (QA Reviewer)</div>
+          <a href="https://github.com/FrancoCalcinaFlores" class="github-link" target="_blank"
+            rel="noopener noreferrer">@FrancoCalcinaFlores</a>
+        </div>
+
+        <!-- Member 2 -->
+        <div class="team-card" id="t-card-2">
+          <div class="member-avatar">CZ</div>
+          <h3>Choquehuanca Zapana, Hernan</h3>
+          <div class="role">Programador de Pruebas (Test Developer)</div>
+          <a href="https://github.com/hz07s" class="github-link" target="_blank" rel="noopener noreferrer">@hz07s</a>
+        </div>
+
+        <!-- Member 3 -->
+        <div class="team-card" id="t-card-3">
+          <div class="member-avatar">LR</div>
+          <h3>Larico Rodriguez, Bryan</h3>
+          <div class="role">Programador de Pruebas (Test Developer)</div>
+          <a href="https://github.com/BryanLarico" class="github-link" target="_blank"
+            rel="noopener noreferrer">@BryanLarico</a>
+        </div>
+
+        <!-- Member 4 -->
+        <div class="team-card" id="t-card-4">
+          <div class="member-avatar">MV</div>
+          <h3>Maldonado Vilca, Victor</h3>
+          <div class="role">Programador de Pruebas (Test Developer)</div>
+          <a href="https://github.com/Victor-Gonzalo-Maldonado-Vilca" class="github-link" target="_blank"
+            rel="noopener noreferrer">@Victor-Gonzalo-Maldonado-Vilca</a>
+        </div>
+
+        <!-- Member 5 -->
+        <div class="team-card" id="t-card-5">
+          <div class="member-avatar">NC</div>
+          <h3>Nina Calizaya, Rafael</h3>
+          <div class="role">Programador de Pruebas (Test Developer)</div>
+          <a href="https://github.com/DrN25" class="github-link" target="_blank" rel="noopener noreferrer">@DrN25</a>
+        </div>
+
+        <!-- Member 6 -->
+        <div class="team-card" id="t-card-6">
+          <div class="member-avatar">SS</div>
+          <h3>Suclle Suca, Michael</h3>
+          <div class="role">Gestión de Documentación y Calidad (QA/Doc)</div>
+          <a href="https://github.com/MichaelSucSuc" class="github-link" target="_blank"
+            rel="noopener noreferrer">@MichaelSucSuc</a>
+        </div>
+      </div>
+
+      <!-- Matriz de Dedicación y Carga de Trabajo -->
+      <div class="roles-policy-container"
+        style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 2.25rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+        <h3
+          style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; color: #ffffff; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          Roleas y Carga Horaria (Regla 50/50)
+        </h3>
+        <p
+          style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.75rem; line-height: 1.65; font-weight: 300;">
+          Para mitigar retrasos en el desarrollo y maximizar la entrega de código de pruebas, se utiliza un modelo de
+          co-responsabilidad técnica. Los líderes de sprint actúan además como desarrolladores y los no-desarrolladores
+          asumen programación de apoyo:
+        </p>
+
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.25rem;">
+          <!-- Card 1: Devs -->
+          <div
+            style="background-color: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 10px; padding: 1.25rem; border-left: 3px solid var(--color-primary);">
+            <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #ffffff; margin-bottom: 0.5rem;">💻
+              Programadores de Pruebas</h4>
+            <ul
+              style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0;">
+              <li>• Dedicación ordinaria: <strong>100% Desarrollo de Tests (Dev)</strong>.</li>
+              <li>• Rol en caso de Liderazgo: <strong>50% Gestión / 50% Dev</strong>.</li>
+              <li>• Foco: Codificación pura, mockeo y testing de suites core (Vitest/Playwright).</li>
+            </ul>
+          </div>
+
+          <!-- Card 2: Especialistas -->
+          <div
+            style="background-color: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 10px; padding: 1.25rem; border-left: 3px solid var(--color-secondary);">
+            <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #ffffff; margin-bottom: 0.5rem;">📂
+              Roles Especialistas (Doc/QA, Reviewer)</h4>
+            <ul
+              style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0;">
+              <li>• Dedicación ordinaria: <strong>50% Especialidad / 50% Dev</strong>.</li>
+              <li>• Rol en caso de Liderazgo: <strong>50% Gestión / 50% Especialidad</strong>.</li>
+              <li>• Foco: Wiki, Pages y alineamiento, junto con codificación auxiliar.</li>
+            </ul>
+          </div>
+
+          <!-- Card 3: Liderazgo -->
+          <div
+            style="background-color: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 10px; padding: 1.25rem; border-left: 3px solid var(--color-success);">
+            <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #ffffff; margin-bottom: 0.5rem;">👑
+              Liderazgo Rotativo (Sprint Lead)</h4>
+            <ul
+              style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0;">
+              <li>• Sprint 1: <strong>Rafael Nina</strong> (1 Líder)</li>
+              <li>• Sprint 2: <strong>Hernan C. y Victor M.</strong> (2 Co-líderes)</li>
+              <li>• Sprint 3: <strong>Bryan L. y Franco C.</strong> (2 Co-líderes)</li>
+              <li>• Sprint 4: <strong>Michael S.</strong> (1 Líder)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tabla de Asignación de Roles por Sprint -->
+        <div
+          style="overflow-x: auto; margin-bottom: 2rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); background-color: rgba(0, 0, 0, 0.15);">
+          <table
+            style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; color: var(--text-muted); min-width: 750px;">
+            <thead>
+              <tr
+                style="background-color: rgba(255, 255, 255, 0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-family: 'Outfit', sans-serif; color: #ffffff;">
+                <th style="padding: 0.85rem 1rem;">Integrante</th>
+                <th style="padding: 0.85rem 1rem;">Rol Técnico Fijo</th>
+                <th style="padding: 0.85rem 1rem; text-align: center;">Sprint 1</th>
+                <th style="padding: 0.85rem 1rem; text-align: center;">Sprint 2</th>
+                <th style="padding: 0.85rem 1rem; text-align: center;">Sprint 3</th>
+                <th style="padding: 0.85rem 1rem; text-align: center;">Sprint 4</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rafael -->
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                <td style="padding: 0.85rem 1rem; color: #ffffff; font-weight: 500;">Nina Calizaya, Rafael</td>
+                <td style="padding: 0.85rem 1rem;">Programador de Tests</td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(245, 158, 11, 0.15); color: var(--color-warning); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.2);">👑
+                    Líder (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+              </tr>
+              <!-- Hernan -->
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                <td style="padding: 0.85rem 1rem; color: #ffffff; font-weight: 500;">Choquehuanca Zapana, Hernan</td>
+                <td style="padding: 0.85rem 1rem;">Programador de Tests</td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(245, 158, 11, 0.15); color: var(--color-warning); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.2);">👑
+                    Co-Líder (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+              </tr>
+              <!-- Victor -->
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                <td style="padding: 0.85rem 1rem; color: #ffffff; font-weight: 500;">Maldonado Vilca, Victor</td>
+                <td style="padding: 0.85rem 1rem;">Programador de Tests</td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(245, 158, 11, 0.15); color: var(--color-warning); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.2);">👑
+                    Co-Líder (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+              </tr>
+              <!-- Bryan -->
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                <td style="padding: 0.85rem 1rem; color: #ffffff; font-weight: 500;">Larico Rodriguez, Bryan</td>
+                <td style="padding: 0.85rem 1rem;">Programador de Tests</td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(245, 158, 11, 0.15); color: var(--color-warning); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.2);">👑
+                    Co-Líder (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(6, 182, 212, 0.12); color: var(--color-primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;">💻
+                    Dev (100%)</span></td>
+              </tr>
+              <!-- Franco -->
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                <td style="padding: 0.85rem 1rem; color: #ffffff; font-weight: 500;">Calcina Flores, Franco</td>
+                <td style="padding: 0.85rem 1rem;">Alineamiento y Verificación</td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(168, 85, 247, 0.15); color: var(--color-secondary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(168, 85, 247, 0.2);">🔍
+                    Review (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(168, 85, 247, 0.15); color: var(--color-secondary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(168, 85, 247, 0.2);">🔍
+                    Review (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(245, 158, 11, 0.15); color: var(--color-warning); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.2);">👑
+                    Co-Líder (50% / 50% Review)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(168, 85, 247, 0.15); color: var(--color-secondary); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(168, 85, 247, 0.2);">🔍
+                    Review (50% / 50% Dev)</span></td>
+              </tr>
+              <!-- Michael -->
+              <tr style="border-bottom: none;">
+                <td style="padding: 0.85rem 1rem; color: #ffffff; font-weight: 500;">Suclle Suca, Michael</td>
+                <td style="padding: 0.85rem 1rem;">Documentación y Calidad</td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(16, 185, 129, 0.15); color: var(--color-success); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.2);">📂
+                    Doc/QA (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(16, 185, 129, 0.15); color: var(--color-success); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.2);">📂
+                    Doc/QA (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(16, 185, 129, 0.15); color: var(--color-success); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.2);">📂
+                    Doc/QA (50% / 50% Dev)</span></td>
+                <td style="padding: 0.85rem 1rem; text-align: center;"><span
+                    style="display: inline-block; background-color: rgba(245, 158, 11, 0.15); color: var(--color-warning); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.2);">👑
+                    Líder & Doc (50% / 50% Doc)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.5rem;">
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+            Para examinar en detalle la matriz cruzada de asignación de tareas y responsabilidades por hito, consulta la
+            Wiki oficial:
+          </p>
+          <a href="https://github.com/CigarraAs/actual_testing/wiki/Definición-de-Roles-y-Responsabilidades"
+            class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.5rem;" target="_blank"
+            rel="noopener noreferrer">Ver Documento de Estructura de Roles</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p class="unsa">Escuela Profesional de Ingeniería de Sistemas — UNSA</p>
+      <p>Curso: Pruebas de Software | Semestre 2026-A</p>
+      <p style="margin-top: 1.5rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.15);">Cigarras / Grupo 3 &copy;
+        2026. Licencia MIT.</p>
+    </div>
+  </footer>
+
+  <!-- Interactive JavaScript for Sprint Switcher -->
+  <script>
+    const sprintData = {
+      1: {
+        title: "Sprint 1: Planificación de Pruebas Unitarias y Línea Base",
+        period: "Hito 1: 13 al 27 de Mayo de 2026",
+        leader: "Rafael Diego Nina Calizaya",
+        description: "Configuración del entorno de pruebas unitarias con Vitest e Istanbul en loot-core, definiendo exclusiones y diseñando casos de prueba detallados.",
+        scrumBoardUrl: "https://github.com/orgs/CigarraAs/projects/2/views/1?filterQuery=iteration%3A%22Sprint+1%22",
+        enabled: true,
+        checklist: [
+          { label: "Repositorio de código y documentación de producto consolidado", checked: true },
+          { label: "Plan de pruebas unitarias (PPU) oficial documentado en la Wiki", checked: true },
+          { label: "Presentación interactiva del producto de software (GitHub Pages)", checked: true },
+          { label: "Configuración del tablero Scrum/Kanban en GitHub Projects", checked: true }
+        ],
+        deliverables: [
+          { label: "Plan de Pruebas Unitarias (Wiki)", url: "https://github.com/CigarraAs/actual_testing/wiki/Plan-de-Pruebas-Unitarias", enabled: true },
+          { label: "Reporte de Cobertura Base (Wiki)", url: "https://github.com/CigarraAs/actual_testing/wiki/Documento-de-Cobertura-Actual", enabled: true }
+        ]
+      },
+      2: {
+        title: "Sprint 2: Implementación de Pruebas Unitarias e Integración",
+        period: "Hito 2: 28 de Mayo al 10 de Junio de 2026",
+        leader: "Hernan Choquehuanca y Victor Maldonado",
+        description: "Programación activa de tests unitarios y de integración con bases de datos SQLite en memoria para validar operaciones CRUD.",
+        scrumBoardUrl: "https://github.com/orgs/CigarraAs/projects/2/views/1?filterQuery=iteration%3A%22Sprint+2%22",
+        enabled: false,
+        checklist: [
+          { label: "Implementación completa de pruebas unitarias con Vitest", checked: false },
+          { label: "Informe de Ejecución de Pruebas Unitarias elaborado", checked: false },
+          { label: "Diseño del Plan de Pruebas de Integración (SQLite en memoria)", checked: false },
+          { label: "Implementación y ejecución de tests de integración CRUD", checked: false },
+          { label: "Automatización del proceso mediante Pipeline CI/CD en GitHub Actions", checked: false },
+          { label: "Gestión del Product Backlog del Sprint 2 en GitHub Projects", checked: false }
+        ],
+        deliverables: [
+          { label: "Informe de Pruebas Unitarias", url: "#", enabled: false },
+          { label: "Plan e Informe de Pruebas de Integración", url: "#", enabled: false },
+          { label: "Pipeline CI/CD (GitHub Actions)", url: "#", enabled: false }
+        ]
+      },
+      3: {
+        title: "Sprint 3: Pruebas de Sistema y Aceptación (Playwright & BDD)",
+        period: "Hito 3: 11 de Junio al 08 de Julio de 2026",
+        leader: "Bryan Larico Rodriguez & Franco Calcina Flores",
+        description: "Automatización e implementación de pruebas de sistema (E2E) con Playwright y pruebas de aceptación (BDD) estructuradas en Cucumber/Gherkin.",
+        scrumBoardUrl: "https://github.com/orgs/CigarraAs/projects/2/views/1?filterQuery=iteration%3A%22Sprint+3%22",
+        enabled: false,
+        checklist: [
+          { label: "Diseño del Plan de Pruebas de Sistema (PPS) documentado", checked: false },
+          { label: "Scripts de pruebas de sistema Playwright E2E implementados", checked: false },
+          { label: "Modelado de historias de usuario con sintaxis Gherkin (BDD)", checked: false },
+          { label: "Automatización de pruebas de aceptación con Cucumber y Playwright BDD", checked: false },
+          { label: "Pipeline de despliegue continuo (CD) automatizado en GitHub Actions", checked: false },
+          { label: "Documentación técnica de todo el proceso de pruebas consolidada", checked: false }
+        ],
+        deliverables: [
+          { label: "Plan e Informe de Pruebas de Sistema", url: "#", enabled: false },
+          { label: "Plan e Informe de Pruebas de Aceptación (BDD)", url: "#", enabled: false },
+          { label: "Documentación Técnica del Proceso", url: "#", enabled: false }
+        ]
+      },
+      4: {
+        title: "Sprint 4: Informe Final y Artículo Científico (IEEE)",
+        period: "Sustentación y Defensa: 09 al 16/17 de Julio de 2026",
+        leader: "Michael Suclle Suca",
+        description: "Consolidación de los reportes e informes de todas las pruebas realizadas en el proyecto, redacción del artículo de investigación bajo formato IEEE y preparación para la defensa final.",
+        scrumBoardUrl: "https://github.com/orgs/CigarraAs/projects/2/views/1?filterQuery=iteration%3A%22Sprint+4%22",
+        enabled: false,
+        checklist: [
+          { label: "Artículo científico finalizado bajo formato IEEE", checked: false },
+          { label: "Informe final del proyecto consolidado y aprobado", checked: false },
+          { label: "Presentación y diapositivas de sustentación elaboradas", checked: false },
+          { label: "Sustentación y defensa final del proyecto", checked: false }
+        ],
+        deliverables: [
+          { label: "Artículo Científico (Formato IEEE)", url: "#", enabled: false },
+          { label: "Informe Final Consolidado", url: "#", enabled: false },
+          { label: "Presentación y Diapositivas", url: "#", enabled: false }
+        ]
+      }
+    };
+
+    function switchSprint(sprintNum) {
+      // Deactivate all tabs
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`btn-sprint-${i}`);
+        if (btn) btn.classList.remove('active');
+      }
+
+      // Activate clicked tab
+      const activeBtn = document.getElementById(`btn-sprint-${sprintNum}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Retrieve data
+      const data = sprintData[sprintNum];
+      const infoArea = document.getElementById('sprint-info-area');
+
+      if (!data || !infoArea) return;
+
+      // Construct checklist HTML
+      let checklistHtml = '';
+      data.checklist.forEach(item => {
+        const checkClass = item.checked ? 'checked' : 'pending';
+        const checkSymbol = item.checked ? '&#10003;' : '';
+        const itemClass = item.checked ? 'checklist-item checked' : 'checklist-item';
+        checklistHtml += `
+          <li class="${itemClass}">
+            <span class="check-icon ${checkClass}">${checkSymbol}</span>
+            <span>${item.label}</span>
+          </li>
+        `;
+      });
+
+      // Construct deliverables buttons HTML
+      let deliverablesHtml = '';
+      data.deliverables.forEach(deliv => {
+        if (deliv.enabled) {
+          deliverablesHtml += `
+            <a href="${deliv.url}" class="btn btn-primary btn-sprint-action" target="_blank" rel="noopener noreferrer">
+              ${deliv.label}
+            </a>
+          `;
+        } else {
+          deliverablesHtml += `
+            <button class="btn btn-secondary btn-sprint-action" disabled>
+              ${deliv.label} (Próximamente)
+            </button>
+          `;
+        }
+      });
+
+      // Construct Scrum board button HTML
+      let scrumBoardHtml = '';
+      if (data.enabled) {
+        scrumBoardHtml += `
+          <a href="${data.scrumBoardUrl}" class="btn btn-secondary btn-sprint-action" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4rem; justify-content: center; width: 100%;">
+            Ver Tablero Scrum (Sprint ${sprintNum})
+          </a>
+        `;
+      } else {
+        scrumBoardHtml += `
+          <button class="btn btn-secondary btn-sprint-action" disabled style="display: inline-flex; align-items: center; gap: 0.4rem; justify-content: center; width: 100%;">
+            Ver Tablero Scrum (Sprint ${sprintNum}) (Próximamente)
+          </button>
+        `;
+      }
+
+      // Construct final HTML content
+      infoArea.innerHTML = `
+        <div class="sprint-meta" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="sprint-header-left" style="text-align: left;">
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; color: #ffffff; margin-bottom: 0.25rem;">${data.title}</h3>
+            <div style="font-size: 0.88rem; color: var(--text-muted);">
+              Líder: <strong style="color: var(--color-primary);">${data.leader}</strong>
+            </div>
+          </div>
+          <span class="sprint-period">${data.period}</span>
+        </div>
+        <p class="sprint-description" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem; text-align: left; line-height: 1.65;">${data.description}</p>
+        <div class="sprint-details" style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 2rem; align-items: start;">
+          <div class="checklist-container" style="text-align: left;">
+            <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; margin-bottom: 1rem; color: #ffffff;">Indicaciones e Hitos de Trabajo</h4>
+            <ul class="sprint-checklist" style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
+              ${checklistHtml}
+            </ul>
+          </div>
+          <div class="sprint-cta-box" style="background-color: rgba(0, 0, 0, 0.2); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; color: #ffffff; margin: 0; text-align: left;">Entregables del Sprint</h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted); text-align: left; margin: 0;">Revisa los entregables y reportes técnicos de este hito.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+              ${deliverablesHtml}
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; width: 100%;">
+              ${scrumBoardHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Dynamic Technology Stack Languages Loader
+    async function loadRepoLanguages() {
+      const owner = 'actualbudget';
+      const repo = 'actual';
+      const fallbackData = {
+        "TypeScript": 1827364,
+        "JavaScript": 98127,
+        "CSS": 11655,
+        "HTML": 1942,
+        "Shell": 1942,
+        "Dockerfile": 1942
+      };
+
+      const langMeta = {
+        "TypeScript": { color: "#3178c6", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/typescript/typescript-original.svg" },
+        "JavaScript": { color: "#f1e05a", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg" },
+        "CSS": { color: "#563d7c", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/css3/css3-original.svg" },
+        "HTML": { color: "#e34c26", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/html5/html5-original.svg" },
+        "Shell": { color: "#89e051", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/bash/bash-original.svg" },
+        "Dockerfile": { color: "#384d54", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/docker/docker-original.svg" }
+      };
+
+      let data = fallbackData;
+      try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/languages`);
+        if (response.ok) {
+          data = await response.json();
+        } else {
+          console.warn("GitHub API rate limited or unavailable, loading local fallback data.");
+        }
+      } catch (e) {
+        console.warn("Network error fetching repository languages, loading local fallback data.", e);
+      }
+
+      const totalBytes = Object.values(data).reduce((a, b) => a + b, 0);
+      const containerBar = document.getElementById("lang-bar-progress");
+      const containerLegend = document.getElementById("lang-bar-legend");
+
+      if (!containerBar || !containerLegend) return;
+
+      containerBar.innerHTML = "";
+      containerLegend.innerHTML = "";
+
+      const sortedLangs = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+      sortedLangs.forEach(([lang, bytes]) => {
+        const pct = ((bytes / totalBytes) * 100).toFixed(1);
+        if (parseFloat(pct) < 0.1) return; // Skip negligible languages
+
+        const meta = langMeta[lang] || { color: "#9ca3af", icon: "" };
+
+        // Create segment
+        const segment = document.createElement("div");
+        segment.className = "lang-segment";
+        segment.style.width = "0%";
+        segment.style.backgroundColor = meta.color;
+        segment.title = `${lang}: ${pct}%`;
+        containerBar.appendChild(segment);
+
+        setTimeout(() => {
+          segment.style.width = `${pct}%`;
+        }, 50);
+
+        // Create legend item
+        const legendItem = document.createElement("div");
+        legendItem.className = "lang-legend-item";
+
+        let imgHtml = "";
+        if (meta.icon) {
+          imgHtml = `<img src="${meta.icon}" alt="${lang}" class="lang-icon" />`;
+        } else {
+          imgHtml = `<span class="lang-dot" style="background-color: ${meta.color};"></span>`;
+        }
+
+        legendItem.innerHTML = `
+          ${imgHtml}
+          <strong style="color: #ffffff; font-weight: 600;">${lang}</strong>
+          <span>${pct}%</span>
+        `;
+        containerLegend.appendChild(legendItem);
+      });
+    }
+
+    function switchModuleTab(tabName) {
+      const btnValid = document.getElementById('btn-tab-valid');
+      const btnIgnored = document.getElementById('btn-tab-ignored');
+      const contentValid = document.getElementById('module-content-valid');
+      const contentIgnored = document.getElementById('module-content-ignored');
+
+      if (!btnValid || !btnIgnored || !contentValid || !contentIgnored) return;
+
+      if (tabName === 'valid') {
+        btnValid.classList.add('active');
+        btnIgnored.classList.remove('active');
+        btnIgnored.classList.remove('tab-excluded');
+        contentValid.style.display = 'block';
+        contentIgnored.style.display = 'none';
+        filterSubmodules('all');
+      } else {
+        btnValid.classList.remove('active');
+        btnIgnored.classList.add('active');
+        btnIgnored.classList.add('tab-excluded');
+        contentValid.style.display = 'none';
+        contentIgnored.style.display = 'block';
+      }
+    }
+
+    function filterSubmodules(domain) {
+      const pills = document.querySelectorAll('.submodule-filters .filter-pill');
+      pills.forEach(p => p.classList.remove('active'));
+
+      const activePill = document.getElementById(`pill-${domain}`);
+      if (activePill) activePill.classList.add('active');
+
+      const rows = document.querySelectorAll('#module-content-valid .submodule-row-card');
+      rows.forEach(row => {
+        const rowDomain = row.getAttribute('data-domain');
+        if (domain === 'all' || rowDomain === domain) {
+          row.style.display = 'grid';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Load Sprint 1 and languages on startup
+    document.addEventListener("DOMContentLoaded", () => {
+      switchSprint(1);
+      loadRepoLanguages();
+    });
+  </script>
+
+</body>
+
+</html>

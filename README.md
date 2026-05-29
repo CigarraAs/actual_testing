@@ -7,8 +7,6 @@
 ## Imagen Referencial del funcionamiento 
 (https://actualbudget.org/docs/contributing/) 
 
-
-Want to say thanks? Click the ⭐ at the top of the page.
 ## Para correrlo en Windows
 
 ### Prerrequisitos

@@ -1,11 +1,50 @@
 # ¿Qué es Actual?
 Actual (también conocido como Actual Budget) es una herramienta de finanzas personales que se enfoca en la privacidad y el control de tus datos. Es 100% gratuita, de código abierto y opera bajo el principio "local-first" (primero local)
 
+Una app de finanzas personales con paneles, calendario de transacciones, listado de cuentas, gestión de beneficiarios y pagos programados.
+
+- **Para qué sirve:** Ver tus ingresos/gastos, revisar transacciones, crear reglas para beneficiarios y controlar pagos programados.
+
+## Imagen Referencial del funcionamiento 
+
 <p align="center">
   <img src="/demo.png" alt="Actualbudget" />
 </p>
 
-## Imagen Referencial del funcionamiento 
+## Secciones de funcionamiento:
+
+- Reportes (panel principal): muestra métricas clave y gráficos (ingresos, gastos, patrimonio, flujo de caja).
+  - Imagen:
+
+    ![Reportes](resources_readme/menu_principal.png)
+
+- Calendario de transacciones: vista por día con barras de ingresos/egresos y detalles al pasar el cursor.
+  - Imagen:
+
+    ![Calendario ingresos/egresos](resources_readme/calendario_ingresos_egresos.png)
+
+- Todas las cuentas (transacciones): lista de movimientos con filtro por cuenta, categorías y estados.
+  - Imagen:
+
+    ![Todas las cuentas](resources_readme/apartado_todas_las_cuentas.png)
+
+- Reportes (widgets): métricas grandes y mini-gráficos para comparar periodos y presupuesto.
+  - Imagen:
+
+    ![Reportes - widgets](resources_readme/apartado_reports.png)
+
+- Payees (beneficiarios): listado de beneficiarios y botones para crear reglas automáticas.
+  - Imagen:
+
+    ![Payees](resources_readme/apartado_payees.png)
+
+- Schedules / Calendario de pagos: lista de pagos programados con estado (Missed, Due, Upcoming, Scheduled).
+  - Imagen:
+
+    ![Calendario pagos](resources_readme/apartado_calendario.png)
+
+
+
 
 ## Para correrlo en Windows
 

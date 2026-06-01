@@ -11,6 +11,8 @@ Una app de finanzas personales con paneles, calendario de transacciones, listado
   <img src="/demo.png" alt="Actualbudget" />
 </p>
 
+*Figura: Vista principal de la aplicación con paneles y navegación.*
+
 ## Secciones de funcionamiento:
 
 - Reportes (panel principal): muestra métricas clave y gráficos (ingresos, gastos, patrimonio, flujo de caja).
@@ -18,30 +20,74 @@ Una app de finanzas personales con paneles, calendario de transacciones, listado
 
     ![Reportes](resources_readme/menu_principal.png)
 
+    *Figura: Panel principal con métricas y gráficos resumidos.*
+
 - Calendario de transacciones: vista por día con barras de ingresos/egresos y detalles al pasar el cursor.
   - Imagen:
 
     ![Calendario ingresos/egresos](resources_readme/calendario_ingresos_egresos.png)
+
+    *Figura: Calendario mostrando barras diarias de ingresos y egresos.*
 
 - Todas las cuentas (transacciones): lista de movimientos con filtro por cuenta, categorías y estados.
   - Imagen:
 
     ![Todas las cuentas](resources_readme/apartado_todas_las_cuentas.png)
 
+    *Figura: Listado de transacciones con filtros por cuenta.*
+
 - Reportes (widgets): métricas grandes y mini-gráficos para comparar periodos y presupuesto.
   - Imagen:
 
     ![Reportes - widgets](resources_readme/apartado_reports.png)
+
+    *Figura: Widgets de reportes mostrando comparativas y tendencias.*
+
+  - Imágenes adicionales de reportes:
+
+
+    ![Reportes - Total Income](resources_readme/apartado_reports_TotalIncome.png)
+
+    *Figura: Desglose de ingresos totales por periodo.*
+
+
+    ![Reportes - Historial](resources_readme/apartado_reports_Historial.png)
+
+    *Figura: Historial de transacciones y cambios en el tiempo.*
+
+
+    ![Reportes - Por cada banco](resources_readme/apartado_porCadaBanco.png)
+
+    *Figura: Comparativa de cuentas por banco.*
+
+
+    ![Reglas automáticas](resources_readme/apartado_rules.png)
+
+    *Figura: Configuración de reglas automáticas para beneficiarios.*
+
+
+    ![Presupuesto](resources_readme/apartado_budget.png)
+
+    *Figura: Vista de presupuesto con categorías y límites.*
+
+
+    ![Todas las cuentas (vista)](resources_readme/apartado_AllAccounts.png)
+
+    *Figura: Vista detallada de todas las cuentas y movimientos.*
 
 - Payees (beneficiarios): listado de beneficiarios y botones para crear reglas automáticas.
   - Imagen:
 
     ![Payees](resources_readme/apartado_payees.png)
 
+    *Figura: Gestión de beneficiarios y reglas automáticas.*
+
 - Schedules / Calendario de pagos: lista de pagos programados con estado (Missed, Due, Upcoming, Scheduled).
   - Imagen:
 
     ![Calendario pagos](resources_readme/apartado_calendario.png)
+
+    *Figura: Pagos programados con estados y fechas.*
 
 
 

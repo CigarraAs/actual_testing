@@ -1,0 +1,293 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import * as db from '#server/db';
+
+describe('Notes - Pruebas Adicionales', () => {
+  beforeEach(global.emptyDatabase());
+  afterEach(global.emptyDatabase());
+
+  async function setupDatabase() {
+    const account = await db.insertAccount({
+      name: 'Cuenta Principal',
+      type: 'checking',
+      offbudget: 0,
+    });
+
+    await db.insertCategoryGroup({
+      id: 'expenses',
+      name: 'Gastos',
+      is_income: 0,
+    });
+
+    await db.insertCategory({
+      id: 'food-cat',
+      name: 'Comida',
+      cat_group: 'expenses',
+      is_income: 0,
+    });
+
+    return account;
+  }
+
+  // ============================================================================
+  // NOTE-001: Crear nota en transacción
+  // ============================================================================
+  it('NOTE-001: Registrar nota en transacción', async () => {
+    const account = await setupDatabase();
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: 'Compra de frutas y verduras en el mercado',
+    });
+    const transaction = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(transaction[0].notes).toBe('Compra de frutas y verduras en el mercado');
+  });
+
+  // ============================================================================
+  // NOTE-002: Nota vacía permitida
+  // ============================================================================
+  it('NOTE-002: Transacción sin nota permitida', async () => {
+    const account = await setupDatabase();
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -3000,
+      notes: null,
+    });
+
+    const transaction = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(transaction[0].notes).toBeNull();
+  });
+
+  // ============================================================================
+  // NOTE-003: Nota largo permitido
+  // ============================================================================
+  it('NOTE-003: Notas largas soportadas', async () => {
+    const account = await setupDatabase();
+
+    const longNote = 'Esta es una nota muy larga que contiene muchos detalles sobre la transacción, incluyendo información adicional sobre el lugar, la hora, las cantidades específicas y cualquier otra información relevante que el usuario desee registrar para referencia futura.';
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: longNote,
+    });
+
+    const transaction = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(transaction[0].notes).toBe(longNote);
+  });
+
+  // ============================================================================
+  // NOTE-004: Notas con caracteres especiales
+  // ============================================================================
+  it('NOTE-004: Caracteres especiales en notas', async () => {
+    const account = await setupDatabase();
+
+    const specialNote = 'Compra €50, con descuento 20% (¡especial!). Detalles: @tienda, #oferta, "calidad"';
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: specialNote,
+    });
+
+    const transaction = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(transaction[0].notes).toBe(specialNote);
+  });
+
+  // ============================================================================
+  // NOTE-005: Notas con saltos de línea
+  // ============================================================================
+  it('NOTE-005: Notas con múltiples líneas', async () => {
+    const account = await setupDatabase();
+
+    const multilineNote = 'Compra en mercado\nProductos: frutas, verduras\nHorario: 10:00 AM\nTotal: $50';
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: multilineNote,
+    });
+
+    const transaction = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(transaction[0].notes).toContain('\n');
+  });
+
+  // ============================================================================
+  // NOTE-006: Buscar transacciones por nota
+  // ============================================================================
+  it('NOTE-006: Buscar transacciones por texto de nota', async () => {
+    const account = await setupDatabase();
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: 'Compra en Mercado San Pedro',
+    });
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-20',
+      category: 'food-cat',
+      amount: -3000,
+      notes: 'Compra en tienda local',
+    });
+
+    const results = await db.all(
+      "SELECT * FROM transactions WHERE notes LIKE ? AND acct = ?",
+      ['%Mercado%', account]
+    ) as any[];
+
+    expect(results.length).toBe(1);
+    expect(results[0].notes).toContain('Mercado San Pedro');
+  });
+
+  // ============================================================================
+  // NOTE-007: Actualizar nota existente
+  // ============================================================================
+  it('NOTE-007: Modificar nota de transacción', async () => {
+    const account = await setupDatabase();
+
+    const txId = await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: 'Nota original',
+    });
+
+    await db.runQuery(
+      'UPDATE transactions SET notes = ? WHERE id = ?',
+      ['Nota actualizada', txId]
+    );
+
+    const updated = await db.all(
+      'SELECT notes FROM transactions WHERE id = ?',
+      [txId]
+    ) as any[];
+
+    expect(updated[0].notes).toBe('Nota actualizada');
+  });
+
+  // ============================================================================
+  // NOTE-008: Notas categorizadas
+  // ============================================================================
+  it('NOTE-008: Notas con etiquetas/categorías', async () => {
+    const account = await setupDatabase();
+
+    await db.insertTransaction({
+      account: account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -5000,
+      notes: '#urgente #importante Compra essential',
+    });
+
+    const transaction = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(transaction[0].notes).toContain('#urgente');
+    expect(transaction[0].notes).toContain('#importante');
+  });
+
+  // ============================================================================
+  // NOTE-009: Historial de notas
+  // ============================================================================
+  it('NOTE-009: Registrar múltiples notas en diferentes transacciones', async () => {
+    const account = await setupDatabase();
+
+    const notes = [
+      'Primera compra',
+      'Segunda compra',
+      'Tercera compra',
+      'Cuarta compra',
+    ];
+
+    for (const note of notes) {
+      await db.insertTransaction({
+        account: account,
+        date: '2026-06-15',
+        category: 'food-cat',
+        amount: -2000,
+        notes: note,
+      });
+    }
+
+    const allTransactions = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    expect(allTransactions.length).toBe(4);
+    expect(allTransactions.map(t => t.notes)).toEqual(notes);
+  });
+
+  // ============================================================================
+  // NOTE-010: Validar integridad de notas
+  // ============================================================================
+  it('NOTE-010: Integridad de datos en notas', async () => {
+    const account = await setupDatabase();
+
+    const testNotes = [
+      'Nota simple',
+      'Nota con números 12345',
+      'Nota con símbolos !@#$%^&*()',
+      'Nota con emojis 😀🎉',
+      'Nota con acentos: ñáéíóú',
+    ];
+
+    for (const note of testNotes) {
+      await db.insertTransaction({
+        account: account,
+        date: '2026-06-15',
+        category: 'food-cat',
+        amount: -2000,
+        notes: note,
+      });
+    }
+
+    const allTransactions = await db.all(
+      'SELECT notes FROM transactions WHERE acct = ?',
+      [account]
+    ) as any[];
+
+    for (let i = 0; i < testNotes.length; i++) {
+      expect(allTransactions[i].notes).toBe(testNotes[i]);
+    }
+  });
+});

@@ -25,7 +25,6 @@ describe('Forecast - Pruebas Adicionales', () => {
       is_income: 0,
     });
 
-    // CORRECCIÓN: insertAccount devuelve directamente un string (el ID)
     const accountId = await db.insertAccount({
       name: 'Cuenta Principal',
       type: 'checking',
@@ -34,7 +33,7 @@ describe('Forecast - Pruebas Adicionales', () => {
 
     const transDate = '2026-06-15';
     await db.insertTransaction({
-      account: accountId, // Usamos la variable directa
+      account: accountId,
       date: transDate,
       category: 'food-cat',
       amount: -5000,
@@ -42,7 +41,7 @@ describe('Forecast - Pruebas Adicionales', () => {
     });
 
     await db.insertTransaction({
-      account: accountId, // Usamos la variable directa
+      account: accountId,
       date: transDate,
       category: 'utilities-cat',
       amount: -3000,
@@ -56,7 +55,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-001: Datos de transacciones registrados correctamente', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]" para evaluar el campo .category
     const transactions = await db.all(
       'SELECT * FROM transactions WHERE date = ?',
       [20260615],
@@ -73,7 +71,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-002: Calcular promedio mensual por categoría', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]"
     const foodTransactions = await db.all(
       'SELECT amount FROM transactions WHERE category = ?',
       ['food-cat'],
@@ -89,7 +86,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-003: Datos históricos disponibles', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]" para leer .count
     const allTransactions = await db.all('SELECT COUNT(*) as count FROM transactions') as any[];
 
     expect(allTransactions[0].count).toBeGreaterThanOrEqual(2);
@@ -101,7 +97,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-004: Categorías con datos identificadas', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]"
     const categories = await db.all('SELECT DISTINCT category FROM transactions') as any[];
 
     expect(categories.length).toBeGreaterThanOrEqual(2);
@@ -113,7 +108,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-005: Rango de fechas válido para pronóstico', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]" para desbloquear .minDate y .maxDate
     const dateRange = await db.all(
       'SELECT MIN(date) as minDate, MAX(date) as maxDate FROM transactions',
     ) as any[];
@@ -128,7 +122,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-006: Tendencias detectables en datos', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]"
     const totalExpenses = await db.all(
       'SELECT SUM(ABS(amount)) as total FROM transactions WHERE amount < 0',
     ) as any[];
@@ -142,7 +135,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   it('FORE-007: Valores para pronóstico (bajo y alto)', async () => {
     await setupDatabase();
 
-    // SOLUCIÓN: Agregamos "as any[]"
     const expenses = await db.all(
       'SELECT amount FROM transactions WHERE amount < 0 ORDER BY amount DESC',
     ) as any[];
@@ -160,8 +152,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   // ============================================================================
   it('FORE-008: Integridad de montos en transacciones', async () => {
     await setupDatabase();
-
-    // SOLUCIÓN: Agregamos "as any[]"
     const transactions = await db.all('SELECT amount FROM transactions') as any[];
 
     for (const tx of transactions) {
@@ -175,8 +165,6 @@ describe('Forecast - Pruebas Adicionales', () => {
   // ============================================================================
   it('FORE-009: Datos suficientes para pronóstico confiable', async () => {
     await setupDatabase();
-
-    // SOLUCIÓN: Agregamos "as any[]"
     const monthlyData = await db.all(`
       SELECT DATE(date) as month, COUNT(*) as count
       FROM transactions

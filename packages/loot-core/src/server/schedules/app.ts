@@ -84,7 +84,7 @@ export function areConditionValuesEqual(left, right) {
   return false;
 }
 
-function areScheduleConditionsEqual(
+export function areScheduleConditionsEqual(
   left?: RuleConditionEntity,
   right?: RuleConditionEntity,
 ) {
@@ -429,7 +429,7 @@ async function getUpcomingDates({ config, count }) {
 
 // Services
 
-function onRuleUpdate(rule) {
+export function onRuleUpdate(rule) {
   const { actions, conditions } =
     rule instanceof Rule ? rule.serialize() : ruleModel.toJS(rule);
 
@@ -458,7 +458,7 @@ function onRuleUpdate(rule) {
   }
 }
 
-function trackJSONPaths() {
+export function trackJSONPaths() {
   // Populate the table
   db.transaction(() => {
     getRules().forEach(rule => {
@@ -469,7 +469,7 @@ function trackJSONPaths() {
   return addSyncListener(onApplySync);
 }
 
-function onApplySync(oldValues, newValues) {
+export function onApplySync(oldValues, newValues) {
   newValues.forEach((items, table) => {
     if (table === 'rules') {
       items.forEach(newValue => {
@@ -511,7 +511,7 @@ async function postTransactionForSchedule({
 
 // TODO: make this sequential
 
-async function advanceSchedulesService(syncSuccess) {
+export async function advanceSchedulesService(syncSuccess) {
   // Move all paid schedules
   const { data: schedules } = await aqlQuery(
     q('schedules')

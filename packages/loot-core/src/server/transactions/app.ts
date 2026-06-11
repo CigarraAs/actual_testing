@@ -33,7 +33,7 @@ export type TransactionHandlers = {
   'get-latest-transaction': typeof getLatestTransaction;
 };
 
-async function handleBatchUpdateTransactions({
+export async function handleBatchUpdateTransactions({
   added,
   deleted,
   updated,
@@ -51,22 +51,22 @@ async function handleBatchUpdateTransactions({
   return result;
 }
 
-async function addTransaction(transaction: TransactionEntity) {
+export async function addTransaction(transaction: TransactionEntity) {
   await handleBatchUpdateTransactions({ added: [transaction] });
   return {};
 }
 
-async function updateTransaction(transaction: TransactionEntity) {
+export async function updateTransaction(transaction: TransactionEntity) {
   await handleBatchUpdateTransactions({ updated: [transaction] });
   return {};
 }
 
-async function deleteTransaction(transaction: Pick<TransactionEntity, 'id'>) {
+export async function deleteTransaction(transaction: Pick<TransactionEntity, 'id'>) {
   await handleBatchUpdateTransactions({ deleted: [transaction] });
   return {};
 }
 
-async function moveTransaction({
+export async function moveTransaction({
   id,
   accountId,
   targetId,
@@ -96,7 +96,7 @@ async function moveTransaction({
   return {};
 }
 
-async function parseTransactionsFile({
+export async function parseTransactionsFile({
   filepath,
   options,
 }: {
@@ -106,7 +106,7 @@ async function parseTransactionsFile({
   return parseFile(filepath, options);
 }
 
-async function exportTransactions({
+export async function exportTransactions({
   transactions,
   accounts,
   categoryGroups,
@@ -120,7 +120,7 @@ async function exportTransactions({
   return exportToCSV(transactions, accounts, categoryGroups, payees);
 }
 
-async function exportTransactionsQuery({
+export async function exportTransactionsQuery({
   query: queryState,
 }: {
   query: QueryState;
@@ -128,7 +128,7 @@ async function exportTransactionsQuery({
   return exportQueryToCSV(new Query(queryState));
 }
 
-async function getEarliestTransaction() {
+export async function getEarliestTransaction() {
   const { data } = await aqlQuery(
     q('transactions')
       .options({ splits: 'none' })
@@ -139,7 +139,7 @@ async function getEarliestTransaction() {
   return data[0] || null;
 }
 
-async function getLatestTransaction() {
+export async function getLatestTransaction() {
   const { data } = await aqlQuery(
     q('transactions')
       .options({ splits: 'none' })

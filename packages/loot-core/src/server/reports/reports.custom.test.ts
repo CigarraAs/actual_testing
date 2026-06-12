@@ -359,4 +359,84 @@ describe('Reports - Pruebas Adicionales', () => {
     const data = reportModel.fromJS(entity);
     expect(data.sort_by).toBe('desc');
   });
+
+  // ============================================================================
+  // FN06-CP-009: Crear y recuperar reporte financiero personalizado
+  // ============================================================================
+  it('FN06-CP-009: Crear y recuperar reporte financiero personalizado (Net Worth o Spending)', async () => {
+    // 1. Configuramos el reporte utilizando la entidad modelo
+    const reportData = createReportEntity({
+      name: 'Mi Reporte de Patrimonio Neto',
+      mode: 'total',
+      graphType: 'LineGraph',
+      balanceType: 'netAssets',
+    });
+
+    // 2. Creamos el reporte utilizando el handler de app
+    const reportId = await app.handlers['report/create'](reportData);
+    expect(reportId).toBeDefined();
+
+    // 3. Obtenemos todos los reportes y verificamos la persistencia del que acabamos de crear
+    const reports = await app.handlers['report/get']();
+    const createdReport = reports.find(r => r.id === reportId);
+    expect(createdReport).toBeDefined();
+    expect(createdReport!.name).toBe('Mi Reporte de Patrimonio Neto');
+    expect(createdReport!.graphType).toBe('LineGraph');
+  });
+
+  // ============================================================================
+  // FN06-CP-010: Validar unicidad del nombre del reporte
+  // ============================================================================
+  it('FN06-CP-010: Validar unicidad del nombre del reporte (error al duplicar)', async () => {
+    // 1. Creamos un reporte inicial con un nombre específico
+    const report1 = createReportEntity({ name: 'Reporte Mensual Fijo' });
+    await app.handlers['report/create'](report1);
+
+    // 2. Intentamos crear otro reporte con el mismo nombre
+    const report2 = createReportEntity({ name: 'Reporte Mensual Fijo' });
+
+    // 3. Esperamos que el handler lance una excepción controlada
+    await expect(
+      app.handlers['report/create'](report2),
+    ).rejects.toThrow('There is already a report named Reporte Mensual Fijo');
+  });
+
+  // ============================================================================
+  // FN06-CP-011: Validar campos obligatorios en el reporte
+  // ============================================================================
+  it('FN06-CP-011: Validar campos obligatorios en el reporte (como name)', async () => {
+    // 1. Intentamos crear un reporte sin nombre (cadena vacía)
+    const invalidReport = createReportEntity({ name: '' });
+
+    // 2. Verificamos que el handler lance el error de validación de nombre obligatorio
+    await expect(
+      app.handlers['report/create'](invalidReport),
+    ).rejects.toThrow('Report name is required');
+  });
+
+  // ============================================================================
+  // FN06-CP-012: Validar selección de rangos de fecha y consistencia
+  // ============================================================================
+  it('FN06-CP-012: Validar selección de rangos de fecha y consistencia del reporte', async () => {
+    // 1. Creamos un reporte configurado con un rango estático y fechas específicas
+    const reportData = createReportEntity({
+      name: 'Reporte Primer Semestre 2026',
+      startDate: '2026-01-01',
+      endDate: '2026-06-30',
+      isDateStatic: true,
+      dateRange: 'custom',
+    });
+
+    const reportId = await app.handlers['report/create'](reportData);
+
+    // 2. Recuperamos el reporte de la base de datos
+    const reports = await app.handlers['report/get']();
+    const retrieved = reports.find(r => r.id === reportId);
+
+    // 3. Verificamos la consistencia de los rangos de fecha guardados
+    expect(retrieved).toBeDefined();
+    expect(retrieved!.startDate).toBe('2026-01-01');
+    expect(retrieved!.endDate).toBe('2026-06-30');
+    expect(retrieved!.isDateStatic).toBe(true);
+  });
 });

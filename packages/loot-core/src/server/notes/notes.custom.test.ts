@@ -453,4 +453,115 @@ describe('Notes - Pruebas Adicionales', () => {
     ) as any;
     expect(note.note).toBe('Nota undoable');
   });
+
+  // ============================================================================
+  // FN06-CP-001: Crear una nota en una transacción
+  // ============================================================================
+  it('FN06-CP-001: Crear una nota en una transacción', async () => {
+    // 1. Configuramos la base de datos insertando una cuenta y categoría
+    const account = await setupDatabase();
+
+    // 2. Insertamos una transacción con una nota inicial
+    const txId = await db.insertTransaction({
+      account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -1500,
+      notes: 'Nota inicial de prueba',
+    });
+
+    // 3. Consultamos la base de datos para verificar que la nota se guardó correctamente
+    const transaction = await db.first<any>(
+      'SELECT notes FROM transactions WHERE id = ?',
+      [txId],
+    );
+    expect(transaction.notes).toBe('Nota inicial de prueba');
+  });
+
+  // ============================================================================
+  // FN06-CP-002: Editar una nota en una transacción existente
+  // ============================================================================
+  it('FN06-CP-002: Editar una nota en una transacción existente', async () => {
+    const account = await setupDatabase();
+
+    // 1. Creamos la transacción con nota
+    const txId = await db.insertTransaction({
+      account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -2500,
+      notes: 'Nota antigua',
+    });
+
+    // 2. Actualizamos la nota de la transacción
+    await db.runQuery('UPDATE transactions SET notes = ? WHERE id = ?', [
+      'Nota editada y actualizada',
+      txId,
+    ]);
+
+    // 3. Verificamos que los cambios persistan en la base de datos
+    const transaction = await db.first<any>(
+      'SELECT notes FROM transactions WHERE id = ?',
+      [txId],
+    );
+    expect(transaction.notes).toBe('Nota editada y actualizada');
+  });
+
+  // ============================================================================
+  // FN06-CP-003: Eliminar una nota de una transacción (usando cadena vacía)
+  // ============================================================================
+  it('FN06-CP-003: Eliminar una nota de una transacción (usando cadena vacía)', async () => {
+    const account = await setupDatabase();
+
+    // 1. Creamos la transacción con una nota
+    const txId = await db.insertTransaction({
+      account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -3500,
+      notes: 'Nota a eliminar',
+    });
+
+    // 2. Actualizamos la nota usando una cadena vacía ("") para simular la eliminación por UI
+    await db.runQuery('UPDATE transactions SET notes = ? WHERE id = ?', [
+      '',
+      txId,
+    ]);
+
+    // 3. Verificamos que la nota ahora esté vacía
+    const transaction = await db.first<any>(
+      'SELECT notes FROM transactions WHERE id = ?',
+      [txId],
+    );
+    expect(transaction.notes).toBe('');
+  });
+
+  // ============================================================================
+  // FN06-CP-004: Registrar nota extensa y validar su almacenamiento e integridad
+  // ============================================================================
+  it('FN06-CP-004: Registrar nota extensa con caracteres especiales y emojis', async () => {
+    const account = await setupDatabase();
+
+    // 1. Definimos una nota muy larga con caracteres especiales, saltos de línea y emojis
+    const extensiveNote =
+      'Línea 1: Compra especial para el evento 🎉\n' +
+      'Línea 2: Detalles técnicos, caracteres raros: áéíóú ñ, €100.00, %desc, &ref!\n' +
+      'Línea 3: Texto extra largo '.repeat(10);
+
+    // 2. Insertamos la transacción con esta nota
+    const txId = await db.insertTransaction({
+      account,
+      date: '2026-06-15',
+      category: 'food-cat',
+      amount: -4500,
+      notes: extensiveNote,
+    });
+
+    // 3. Comprobamos la integridad de los datos recuperados de la base de datos
+    const transaction = await db.first<any>(
+      'SELECT notes FROM transactions WHERE id = ?',
+      [txId],
+    );
+    expect(transaction.notes).toBe(extensiveNote);
+  });
 });

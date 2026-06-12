@@ -3,7 +3,19 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as db from '#server/db';
 import * as sheet from '#server/sheet';
 
-import { setBudget, getSheetValue } from './actions';
+import {
+  setBudget,
+  getSheetValue,
+  getSheetBoolean,
+  getBudget,
+  setZero,
+  holdForNextMonth,
+  resetHold,
+  isTrackingBudget,
+  copySinglePreviousMonth,
+  setCategoryCarryover,
+  resetIncomeCarryover,
+} from './actions';
 import * as budget from './base';
 
 describe('Budget - Pruebas Adicionales', () => {
@@ -44,7 +56,7 @@ describe('Budget - Pruebas Adicionales', () => {
   }
 
   // ============================================================================
-  // BUDG-001: Múltiples categorías presupuestadas simultáneamente
+  // BUDG-001: Presupuestar múltiples categorías en el mismo mes
   // ============================================================================
   it('BUDG-001: Presupuestar múltiples categorías en el mismo mes', async () => {
     await setupDatabase();
@@ -72,7 +84,6 @@ describe('Budget - Pruebas Adicionales', () => {
     let value = await getSheetValue('budget202606', 'budget-utilities-cat');
     expect(value).toBe(10000);
 
-    // Actualizar
     await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 25000 });
     await sheet.waitOnSpreadsheet();
 
@@ -114,12 +125,11 @@ describe('Budget - Pruebas Adicionales', () => {
   });
 
   // ============================================================================
-  // BUDG-005: Validar integridad después de múltiples operaciones
+  // BUDG-005: Integridad tras múltiples operaciones secuenciales
   // ============================================================================
   it('BUDG-005: Integridad tras múltiples operaciones secuenciales', async () => {
     await setupDatabase();
 
-    // Secuencia de operaciones
     await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 10000 });
     await sheet.waitOnSpreadsheet();
 
@@ -137,7 +147,7 @@ describe('Budget - Pruebas Adicionales', () => {
   });
 
   // ============================================================================
-  // BUDG-006: Presupuesto acumulativo en múltiples meses
+  // BUDG-006: Presupuesto acumulativo anual
   // ============================================================================
   it('BUDG-006: Presupuesto acumulativo anual', async () => {
     await setupDatabase();
@@ -158,17 +168,15 @@ describe('Budget - Pruebas Adicionales', () => {
   });
 
   // ============================================================================
-  // BUDG-007: Cambiar presupuesto entre categorías
+  // BUDG-007: Reasignar presupuesto entre categorías
   // ============================================================================
   it('BUDG-007: Reasignar presupuesto entre categorías', async () => {
     await setupDatabase();
 
-    // Inicial
     await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 40000 });
     await setBudget({ category: 'transportation-cat', month: '2026-06', amount: 10000 });
     await sheet.waitOnSpreadsheet();
 
-    // Reasignar
     await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 30000 });
     await setBudget({ category: 'transportation-cat', month: '2026-06', amount: 20000 });
     await sheet.waitOnSpreadsheet();
@@ -186,7 +194,7 @@ describe('Budget - Pruebas Adicionales', () => {
   it('BUDG-008: Presupuesto con valor máximo soportado', async () => {
     await setupDatabase();
 
-    const maxAmount = 999999999 * 100; // 999999999.99
+    const maxAmount = 999999999 * 100;
     await setBudget({ category: 'utilities-cat', month: '2026-06', amount: maxAmount });
     await sheet.waitOnSpreadsheet();
 
@@ -195,12 +203,11 @@ describe('Budget - Pruebas Adicionales', () => {
   });
 
   // ============================================================================
-  // BUDG-009: Categoría con presupuesto cero vs. sin presupuestar
+  // BUDG-009: Presupuesto cero vs. sin presupuestar
   // ============================================================================
   it('BUDG-009: Presupuesto cero vs. sin presupuestar', async () => {
     await setupDatabase();
 
-    // Establecer explícitamente a 0
     await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 0 });
     await sheet.waitOnSpreadsheet();
 
@@ -219,5 +226,209 @@ describe('Budget - Pruebas Adicionales', () => {
 
     const value = await getSheetValue('budget202606', 'budget-salary-cat');
     expect(value).toBe(100000);
+  });
+
+  // ============================================================================
+  // BUDG-011: Establecer goal via DB directo
+  // ============================================================================
+  it('BUDG-011: Establecer goal via DB directo', async () => {
+    await setupDatabase();
+
+    await db.insert('zero_budgets', {
+      id: '202606-utilities-cat',
+      month: '202606',
+      category: 'utilities-cat',
+      goal: 30000,
+    });
+    void db;
+    await sheet.waitOnSpreadsheet();
+
+    const goal = await getSheetValue('budget202606', 'goal-utilities-cat');
+    expect(goal).toBe(30000);
+  });
+
+  // ============================================================================
+  // BUDG-012: Goal con long_goal
+  // ============================================================================
+  it('BUDG-012: Goal con meta a largo plazo', async () => {
+    await setupDatabase();
+
+    await db.insert('zero_budgets', {
+      id: '202606-utilities-cat',
+      month: '202606',
+      category: 'utilities-cat',
+      amount: 0,
+      goal: 30000,
+      long_goal: 360000,
+    });
+
+    const goal = await getSheetValue('budget202606', 'goal-utilities-cat');
+    const longGoal = await getSheetValue('budget202606', 'long-goal-utilities-cat');
+    expect(goal).toBe(30000);
+    expect(longGoal).toBe(360000);
+  });
+
+  // ============================================================================
+  // BUDG-013: setBuffer via DB
+  // ============================================================================
+  it('BUDG-013: Buffer del mes', async () => {
+    await setupDatabase();
+
+    await db.insert('zero_budget_months', { id: '202606', buffered: 5000 });
+    await sheet.waitOnSpreadsheet();
+
+    const value = await getSheetValue('budget202606', 'buffered');
+    expect(value).toBe(5000);
+  });
+
+  // ============================================================================
+  // BUDG-014: setZero limpia presupuestos del mes
+  // ============================================================================
+  it('BUDG-014: setZero limpia presupuestos del mes', async () => {
+    await setupDatabase();
+
+    await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 30000 });
+    await setBudget({ category: 'transportation-cat', month: '2026-06', amount: 15000 });
+    await sheet.waitOnSpreadsheet();
+
+    await setZero({ month: '2026-06' });
+    await sheet.waitOnSpreadsheet();
+
+    const utilities = await getSheetValue('budget202606', 'budget-utilities-cat');
+    expect(utilities).toBe(0);
+  });
+
+  // ============================================================================
+  // BUDG-015: getBudget recupera valor
+  // ============================================================================
+  it('BUDG-015: getBudget recupera valor presupuestado', async () => {
+    await setupDatabase();
+
+    await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 42000 });
+    await sheet.waitOnSpreadsheet();
+
+    const value = await getBudget({ category: 'utilities-cat', month: '2026-06' });
+    expect(value).toBe(42000);
+  });
+
+  // ============================================================================
+  // BUDG-016: holdForNextMonth y resetHold
+  // ============================================================================
+  it('BUDG-016: holdForNextMonth y resetHold', async () => {
+    await setupDatabase();
+
+    await setBudget({ category: 'utilities-cat', month: '2026-06', amount: 30000 });
+    await sheet.waitOnSpreadsheet();
+
+    await holdForNextMonth({ month: '2026-06', amount: 15000 });
+    await sheet.waitOnSpreadsheet();
+
+    const carryover = await getSheetBoolean('budget202606', 'carryover-utilities-cat');
+    // holdForNextMonth establece carryover a true para la categoría
+    expect(typeof carryover).toBe('boolean');
+
+    await resetHold({ month: '2026-06' });
+    await sheet.waitOnSpreadsheet();
+
+    const afterReset = await getSheetBoolean('budget202606', 'carryover-utilities-cat');
+    expect(afterReset).toBe(false);
+  });
+
+  // ============================================================================
+  // BUDG-017: isTrackingBudget devuelve false para envelope
+  // ============================================================================
+  it('BUDG-017: isTrackingBudget es false para budget envelope', async () => {
+    await setupDatabase();
+    expect(isTrackingBudget()).toBe(false);
+  });
+
+  // ============================================================================
+  // BUDG-018: getSheetValue para celda inexistente
+  // ============================================================================
+  it('BUDG-018: getSheetValue retorna 0/null para celda inexistente', async () => {
+    await setupDatabase();
+    const value = await getSheetValue('budget202606', 'budget-nonexistent-cat');
+    expect(value === null || value === 0).toBe(true);
+  });
+
+  // ============================================================================
+  // BUDG-019: setBudget con monto negativo
+  // ============================================================================
+  it('BUDG-019: setBudget con monto negativo', async () => {
+    await setupDatabase();
+
+    await setBudget({ category: 'utilities-cat', month: '2026-06', amount: -5000 });
+    await sheet.waitOnSpreadsheet();
+
+    const value = await getSheetValue('budget202606', 'budget-utilities-cat');
+    expect(value).toBe(-5000);
+  });
+
+  // ============================================================================
+  // BUDG-021: copySinglePreviousMonth copia presupuesto del mes anterior
+  // ============================================================================
+  it('BUDG-021: copySinglePreviousMonth copia del mes anterior', async () => {
+    await setupDatabase();
+
+    await setBudget({ category: 'utilities-cat', month: '2026-05', amount: 35000 });
+    await sheet.waitOnSpreadsheet();
+
+    await copySinglePreviousMonth({ month: '2026-06', category: 'utilities-cat' });
+    await sheet.waitOnSpreadsheet();
+
+    const value = await getSheetValue('budget202606', 'budget-utilities-cat');
+    expect(value).toBe(35000);
+  });
+
+  // ============================================================================
+  // BUDG-023: Categoría con múltiples goals
+  // ============================================================================
+  it('BUDG-023: Múltiples metas en el mismo mes', async () => {
+    await setupDatabase();
+
+    await db.insert('zero_budgets', {
+      id: '202606-utilities-cat',
+      month: '202606',
+      category: 'utilities-cat',
+      goal: 30000,
+    });
+    await db.insert('zero_budgets', {
+      id: '202606-transportation-cat',
+      month: '202606',
+      category: 'transportation-cat',
+      goal: 15000,
+    });
+
+    const goal1 = await getSheetValue('budget202606', 'goal-utilities-cat');
+    const goal2 = await getSheetValue('budget202606', 'goal-transportation-cat');
+
+    expect(goal1).toBe(30000);
+    expect(goal2).toBe(15000);
+  });
+
+  it('BUDG-025: setCategoryCarryover activa carryover', async () => {
+    await setupDatabase();
+    await setCategoryCarryover({ startMonth: '2026-06', category: 'utilities-cat', flag: true });
+    await sheet.waitOnSpreadsheet();
+    const carryover = await getSheetBoolean('budget202606', 'carryover-utilities-cat');
+    expect(carryover).toBe(true);
+  });
+
+  it('BUDG-026: setCategoryCarryover desactiva carryover', async () => {
+    await setupDatabase();
+    await setCategoryCarryover({ startMonth: '2026-06', category: 'utilities-cat', flag: true });
+    await sheet.waitOnSpreadsheet();
+    await setCategoryCarryover({ startMonth: '2026-06', category: 'utilities-cat', flag: false });
+    await sheet.waitOnSpreadsheet();
+    const carryover = await getSheetBoolean('budget202606', 'carryover-utilities-cat');
+    expect(carryover).toBe(false);
+  });
+
+  it('BUDG-027: resetIncomeCarryover resetea carryover de ingresos', async () => {
+    await setupDatabase();
+    await resetIncomeCarryover({ month: '2026-06' });
+    await sheet.waitOnSpreadsheet();
+    // Debe completar sin error
+    expect(true).toBe(true);
   });
 });

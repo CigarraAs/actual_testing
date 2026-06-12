@@ -9,6 +9,7 @@ import {
   moveTransaction,
   getEarliestTransaction,
   getLatestTransaction,
+  exportTransactionsQuery,
 } from './app';
 
 beforeEach(global.emptyDatabase());
@@ -101,13 +102,11 @@ async function getTransactionCount(accountId?: string) {
   const query = accountId
     ? `SELECT COUNT(*) as count FROM transactions WHERE acct = '${accountId}' AND tombstone = 0`
     : 'SELECT COUNT(*) as count FROM transactions WHERE tombstone = 0';
-  const result = await db.first(query);
+  const result = await db.first(query) as any;
   return result?.count || 0;
 }
 
-// ============================================================================
 // TRANSACTION CREATION TESTS
-// ============================================================================
 
 describe('Transaction App - Add Transaction', () => {
   it('TX-001: Crear transacción simple con datos básicos', async () => {
@@ -626,9 +625,7 @@ describe('Transaction App - Query Functions', () => {
   });
 });
 
-// ============================================================================
 // EDGE CASES AND ERROR HANDLING
-// ============================================================================
 
 describe('Transaction App - Error Handling', () => {
   it('TX-501: Validar transacción con datos incompletos', async () => {
@@ -707,5 +704,43 @@ describe('Transaction App - Error Handling', () => {
 
     const stored = await db.getTransaction('tx-large-amount');
     expect(stored?.amount).toBe(99999999900);
+  });
+
+
+  // ... Dentro de tu describe principal de pruebas de transacciones:
+
+  it('TX-506: getEarliestTransaction y getLatestTransaction deben retornar null si la BD está vacía', async () => {
+    // Nos aseguramos de que no existan registros previos llamando al limpiador
+    await global.emptyDatabase()();
+
+    const earliest = await getEarliestTransaction();
+    const latest = await getLatestTransaction();
+
+    expect(earliest).toBeNull(); // Cubre la rama del '|| null'
+    expect(latest).toBeNull();   // Cubre la rama del '|| null'
+  });
+
+  it('TX-507: exportTransactionsQuery debe procesar y exportar la query de manera exitosa', async () => {
+    const { account1 } = await setupDatabase();
+
+    // Insertamos al menos un registro para que el flujo de exportación sea completo
+    await db.insertTransaction({
+      id: 'tx-export-1',
+      account: account1,
+      date: '2025-02-11',
+      amount: -1500,
+      cleared: true,
+      reconciled: false,
+    });
+
+    const fakeQueryState = {
+      table: 'transactions',
+      filter: [['amount', '<', 0]],
+      select: ['id', 'amount']
+    };
+
+    // Invocamos al exportador cubriendo las líneas internas de instanciación de Query
+    const csvResult = await exportTransactionsQuery({ query: fakeQueryState as any });
+    expect(csvResult).toBeDefined();
   });
 });

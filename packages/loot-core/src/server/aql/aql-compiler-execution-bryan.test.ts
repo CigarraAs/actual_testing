@@ -29,8 +29,9 @@ const aql = {
         return o;
       });
     }
-    const queryState = query.table ? query : {
-      table: query.from,
+    const queryState = {
+      ...query,
+      table: query.table || query.from,
       selectExpressions: select,
       filterExpressions: where || [],
       groupExpressions: query.group || [],
@@ -698,5 +699,43 @@ describe('AQL - Integration Tests', () => {
     for (let i = 1; i < results.length; i++) {
       expect(results[i].amount).toBeLessThanOrEqual(results[i - 1].amount);
     }
+  });
+  it('AQL-406: Retornar null en calculation cuando no hay filas devueltas', async () => {
+    const data = await setupAQLDatabase();
+    // No insertamos transacciones para forzar que la consulta devuelva un array vacío
+
+    const query = {
+      table: 'transactions',
+      select: ['amount'],
+      from: 'transactions',
+      where: [['id', '=', 'id-inexistente']],
+      calculation: true // Forzamos la bandera de cálculo
+    };
+
+    const results = await aql.exec(query);
+    expect(results).toBeNull();
+  });
+
+  it('AQL-407: Retornar 0 en calculation cuando la fila contiene un valor nulo o falso', async () => {
+    const data = await setupAQLDatabase();
+    // Insertamos una transacción con monto nulo o que cause una agregación vacía que devuelva fila con null
+    await db.insertTransaction({
+      id: 'tx-null-amount',
+      account: data.checking,
+      date: '2025-02-11',
+      amount: null as any, // Forzamos null
+      cleared: false,
+      reconciled: false,
+    });
+
+    const query = {
+      table: 'transactions',
+      select: [{ total_expense: { $sum: '$amount' } }],
+      from: 'transactions',
+      calculation: true
+    };
+
+    const results = await aql.exec(query);
+    expect(results).toBe(0); // Cubre la rama del operador lógico || 0
   });
 });

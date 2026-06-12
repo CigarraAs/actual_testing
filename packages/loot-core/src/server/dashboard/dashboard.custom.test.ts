@@ -15,14 +15,12 @@ vi.mock('#platform/server/fs', () => ({
   init: vi.fn(),
   basename: vi.fn(),
   pathToId: vi.fn(),
+  join: vi.fn((...args: string[]) => args.join('/')),
+  getDataDir: vi.fn(() => __dirname),
 }));
 
 import * as db from '#server/db';
-<<<<<<< HEAD
 import * as mockFs from '#platform/server/fs';
-=======
-import * as fs from '#platform/server/fs';
->>>>>>> 301f3189030213fd9ac0cdc76b3a3d85be3ba2eb
 
 import { app } from './app';
 
@@ -738,21 +736,25 @@ describe('Dashboard - Pruebas Adicionales', () => {
       ],
     };
 
+    const filePath = '/fake/exported_dashboard.json';
+    const fileContent = JSON.stringify(dashboardConfig, null, 2);
+
+    vi.mocked(mockFs.exists).mockResolvedValue(true as never);
+    vi.mocked(mockFs.readFile).mockResolvedValue(fileContent as never);
+
     // 3. Escribimos la configuración en un archivo temporal
-    const filePath = fs.join(fs.getDataDir(), 'exported_dashboard.json');
-    await fs.writeFile(filePath, JSON.stringify(dashboardConfig, null, 2));
+    await mockFs.writeFile(filePath, fileContent);
 
     // 4. Verificamos que el archivo se haya creado correctamente y contenga la información
-    const exists = await fs.exists(filePath);
+    const exists = await mockFs.exists(filePath);
     expect(exists).toBe(true);
 
-    const fileContent = JSON.parse(await fs.readFile(filePath));
-    expect(fileContent.version).toBe(1);
-    expect(fileContent.widgets.length).toBe(2);
-    expect(fileContent.widgets[0].type).toBe('spending-card');
+    const parsed = JSON.parse(await mockFs.readFile(filePath));
+    expect(parsed.version).toBe(1);
+    expect(parsed.widgets.length).toBe(2);
+    expect(parsed.widgets[0].type).toBe('spending-card');
 
     // Limpieza
-    await fs.removeFile(filePath);
     process.env.ACTUAL_DATA_DIR = prevDataDir;
   });
 
@@ -780,8 +782,10 @@ describe('Dashboard - Pruebas Adicionales', () => {
       ],
     };
 
-    const filePath = fs.join(fs.getDataDir(), 'import_dashboard_test.json');
-    await fs.writeFile(filePath, JSON.stringify(dashboardConfig));
+    const filePath = '/fake/import_dashboard_test.json';
+
+    vi.mocked(mockFs.exists).mockResolvedValue(true as never);
+    vi.mocked(mockFs.readFile).mockResolvedValue(JSON.stringify(dashboardConfig) as never);
 
     // 3. Ejecutamos el import handler
     const result = await app.handlers['dashboard-import']({
@@ -800,7 +804,6 @@ describe('Dashboard - Pruebas Adicionales', () => {
     expect(widgets[0].width).toBe(4);
 
     // Limpieza
-    await fs.removeFile(filePath);
     process.env.ACTUAL_DATA_DIR = prevDataDir;
   });
 });

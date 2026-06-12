@@ -474,4 +474,226 @@ describe('Spreadsheet - Pruebas Avanzadas de Cobertura', () => {
     const { edges: after } = g.getEdges();
     expect(after.get('X')!.has('Y')).toBe(false);
   });
+
+  // ============================================================================
+  // SHEET-024: addDependencies con nombres ya resueltos (con sheet)
+  // ============================================================================
+  it('SHEET-024: addDependencies con nombre resuelto', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('testSheet!AD1', 5);
+    spreadsheet.set('testSheet!AD2', 10);
+
+    spreadsheet.createDynamic('testSheet', 'ADSum', {
+      dependencies: ['AD1'],
+      initialValue: 0,
+      run: (ad1: number) => ad1,
+    });
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('testSheet', 'ADSum')).toBe(5);
+
+    // Agregar dependencia con nombre ya resuelto (testSheet!AD2)
+    spreadsheet.addDependencies('testSheet', 'ADSum', ['testSheet!AD2']);
+
+    const node = spreadsheet.getNode('testSheet!ADSum');
+    node._run = (ad1: number, ad2: number) => ad1 + ad2;
+    spreadsheet.recompute('testSheet!ADSum');
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('testSheet', 'ADSum')).toBe(15);
+  });
+
+  // ============================================================================
+  // SHEET-025: triggerDatabaseChanges con SQL node que matchea
+  // ============================================================================
+  it('SHEET-025: triggerDatabaseChanges con nodo SQL que coincide', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    // Crear un nodo con SQL que dependa de la tabla 'transactions'
+    const queryState = q('transactions').filter({ tombstone: false }).select('*').serialize();
+    spreadsheet.createQuery('test', 'SqlDep', queryState);
+    await sheet.waitOnSpreadsheet();
+
+    // Disparar cambios en la tabla 'transactions'
+    const oldValues = new Map([['transactions', []]]);
+    const newValues = new Map([['transactions', [{ id: 'new' }]]]);
+    spreadsheet.triggerDatabaseChanges(oldValues, newValues);
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.hasCell('test!SqlDep')).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-026: topologicalSort con diamante (nodo compartido)
+  // ============================================================================
+  it('SHEET-026: topologicalSort con grafo diamante', () => {
+    const g = Graph();
+    // A -> B, A -> C, B -> D, C -> D
+    g.addEdge('A', 'B');
+    g.addEdge('A', 'C');
+    g.addEdge('B', 'D');
+    g.addEdge('C', 'D');
+
+    const sorted = g.topologicalSort(['A']);
+    expect(sorted.indexOf('A')).toBeLessThan(sorted.indexOf('B'));
+    expect(sorted.indexOf('A')).toBeLessThan(sorted.indexOf('C'));
+    expect(sorted.indexOf('B')).toBeLessThan(sorted.indexOf('D'));
+    expect(sorted.indexOf('C')).toBeLessThan(sorted.indexOf('D'));
+    // D debe ser el último
+    expect(sorted[sorted.length - 1]).toBe('D');
+  });
+
+  // ============================================================================
+  // SHEET-027: voidCell elimina valor de celda
+  // ============================================================================
+  it('SHEET-027: voidCell y deleteCell limpian correctamente', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('test!V1', 100);
+    expect(spreadsheet.getCellValue('test', 'V1')).toBe(100);
+
+    spreadsheet.voidCell('test', 'V1');
+    const valAfterVoid = spreadsheet.getCellValueLoose('test', 'V1');
+
+    spreadsheet.deleteCell('test', 'V1');
+    expect(spreadsheet.hasCell('test!V1')).toBe(false);
+  });
+
+  // ============================================================================
+  // SHEET-028: triggerDatabaseChanges sin nodos SQL no falla
+  // ============================================================================
+  it('SHEET-028: triggerDatabaseChanges sin nodos SQL no falla', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    const oldValues = new Map([['nonexistent_table', []]]);
+    const newValues = new Map([['other_table', [{ id: 1 }]]]);
+    spreadsheet.triggerDatabaseChanges(oldValues, newValues);
+    await sheet.waitOnSpreadsheet();
+    expect(true).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-029: createDynamic dos veces en mismo nodo (no-op)
+  // ============================================================================
+  it('SHEET-029: createDynamic en nodo ya dinámico no hace nada', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('test!DD1', 5);
+    spreadsheet.createDynamic('test', 'DD2', {
+      dependencies: ['DD1'],
+      initialValue: 0,
+      run: (d1: number) => d1 * 2,
+    });
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('test', 'DD2')).toBe(10);
+
+    // Llamar createDynamic de nuevo en el mismo nodo - debe ser no-op
+    spreadsheet.createDynamic('test', 'DD2', {
+      dependencies: ['DD1'],
+      initialValue: 999,
+      run: (d1: number) => d1 * 3,
+    });
+    await sheet.waitOnSpreadsheet();
+    // El valor no debe cambiar porque ya era dinámico
+    expect(spreadsheet.getCellValue('test', 'DD2')).toBe(10);
+  });
+
+  // ============================================================================
+  // SHEET-030: createDynamic con dependencia con sheet name
+  // ============================================================================
+  it('SHEET-030: createDynamic con dep que ya tiene sheet', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('test!DE1', 7);
+    spreadsheet.set('other!DE1', 3);
+
+    spreadsheet.createDynamic('test', 'DE2', {
+      dependencies: ['DE1', 'other!DE1'],
+      initialValue: 0,
+      run: (a: number, b: number) => a + b,
+    });
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('test', 'DE2')).toBe(10);
+  });
+
+  // ============================================================================
+  // SHEET-031: createStatic cell
+  // ============================================================================
+  it('SHEET-031: createStatic crea celda estática', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.createStatic('test', 'Static1', 42);
+    expect(spreadsheet.getCellValue('test', 'Static1')).toBe(42);
+    expect(spreadsheet.hasCell('test!Static1')).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-032: bootup ejecuta callback on-ready
+  // ============================================================================
+  it('SHEET-032: bootup ejecuta callback', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    let booted = false;
+    spreadsheet.bootup(() => {
+      booted = true;
+    });
+    await sheet.waitOnSpreadsheet();
+    expect(booted).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-033: getCellExpr retorna expresión
+  // ============================================================================
+  it('SHEET-033: getCellExpr retorna expresión de celda', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('test!Expr1', '=1+2');
+    const expr = spreadsheet.getCellExpr('test', 'Expr1');
+    expect(expr).toBe('=1+2');
+  });
+
+  // ============================================================================
+  // SHEET-034: load carga valor serializado
+  // ============================================================================
+  it('SHEET-034: load carga valores serializados', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.load('test!Loaded1', 99);
+    expect(spreadsheet.getCellValue('test', 'Loaded1')).toBe(99);
+    expect(spreadsheet.getCellExpr('test', 'Loaded1')).toBe(99);
+  });
+
+  // ============================================================================
+  // SHEET-035: cache barrier methods
+  // ============================================================================
+  it('SHEET-035: startCacheBarrier y endCacheBarrier', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.startCacheBarrier();
+    spreadsheet.endCacheBarrier();
+    // No debe fallar
+    expect(true).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-036: markCacheDirty y markCacheSafe
+  // ============================================================================
+  it('SHEET-036: markCacheDirty y markCacheSafe sin setCacheStatus', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.markCacheDirty();
+    spreadsheet.markCacheSafe();
+    await sheet.waitOnSpreadsheet();
+    expect(true).toBe(true);
+  });
 });

@@ -18,7 +18,11 @@ vi.mock('#platform/server/fs', () => ({
 }));
 
 import * as db from '#server/db';
+<<<<<<< HEAD
 import * as mockFs from '#platform/server/fs';
+=======
+import * as fs from '#platform/server/fs';
+>>>>>>> 301f3189030213fd9ac0cdc76b3a3d85be3ba2eb
 
 import { app } from './app';
 
@@ -703,5 +707,100 @@ describe('Dashboard - Pruebas Adicionales', () => {
     await expect(
       app.handlers['dashboard-copy-widget']({ id: badId, targetDashboardPageId: targetPage }),
     ).rejects.toThrow('Unsupported widget type');
+  });
+
+  // ============================================================================
+  // FN06-CP-019: Exportar configuración del dashboard a JSON
+  // ============================================================================
+  it('FN06-CP-019: Exportar configuración del dashboard a JSON', async () => {
+    // 1. Configuramos el directorio de datos para evitar bloqueos en Windows
+    const prevDataDir = process.env.ACTUAL_DATA_DIR;
+    process.env.ACTUAL_DATA_DIR = __dirname;
+
+    // 2. Creamos la estructura esperada para la configuración del dashboard
+    const dashboardConfig = {
+      version: 1,
+      widgets: [
+        {
+          type: 'spending-card',
+          x: 0,
+          y: 0,
+          width: 6,
+          height: 4,
+        },
+        {
+          type: 'net-worth-card',
+          x: 6,
+          y: 0,
+          width: 6,
+          height: 4,
+        },
+      ],
+    };
+
+    // 3. Escribimos la configuración en un archivo temporal
+    const filePath = fs.join(fs.getDataDir(), 'exported_dashboard.json');
+    await fs.writeFile(filePath, JSON.stringify(dashboardConfig, null, 2));
+
+    // 4. Verificamos que el archivo se haya creado correctamente y contenga la información
+    const exists = await fs.exists(filePath);
+    expect(exists).toBe(true);
+
+    const fileContent = JSON.parse(await fs.readFile(filePath));
+    expect(fileContent.version).toBe(1);
+    expect(fileContent.widgets.length).toBe(2);
+    expect(fileContent.widgets[0].type).toBe('spending-card');
+
+    // Limpieza
+    await fs.removeFile(filePath);
+    process.env.ACTUAL_DATA_DIR = prevDataDir;
+  });
+
+  // ============================================================================
+  // FN06-CP-020: Importar configuración del dashboard y reconstruir
+  // ============================================================================
+  it('FN06-CP-020: Importar configuración del dashboard y reconstruir', async () => {
+    // 1. Configuramos el directorio de datos
+    const prevDataDir = process.env.ACTUAL_DATA_DIR;
+    process.env.ACTUAL_DATA_DIR = __dirname;
+
+    const pageId = await insertDashboardPage('Página Importar');
+
+    // 2. Creamos un archivo JSON de configuración válido
+    const dashboardConfig = {
+      version: 1,
+      widgets: [
+        {
+          type: 'calendar-card',
+          x: 0,
+          y: 0,
+          width: 4,
+          height: 4,
+        },
+      ],
+    };
+
+    const filePath = fs.join(fs.getDataDir(), 'import_dashboard_test.json');
+    await fs.writeFile(filePath, JSON.stringify(dashboardConfig));
+
+    // 3. Ejecutamos el import handler
+    const result = await app.handlers['dashboard-import']({
+      filePath,
+      dashboardPageId: pageId,
+    });
+    expect(result.status).toBe('ok');
+
+    // 4. Verificamos que se haya reconstruido la base de datos con los nuevos widgets
+    const widgets = await db.all(
+      'SELECT type, width FROM dashboard WHERE dashboard_page_id = ? AND tombstone = 0',
+      [pageId],
+    );
+    expect(widgets.length).toBe(1);
+    expect(widgets[0].type).toBe('calendar-card');
+    expect(widgets[0].width).toBe(4);
+
+    // Limpieza
+    await fs.removeFile(filePath);
+    process.env.ACTUAL_DATA_DIR = prevDataDir;
   });
 });

@@ -7,6 +7,7 @@ import { q } from '#shared/query';
 
 import { resolveName, unresolveName } from './util';
 import { number as numberUtil } from './globals';
+import { Graph } from './graph-data-structure';
 
 describe('Spreadsheet - Pruebas Avanzadas de Cobertura', () => {
   beforeEach(global.emptyDatabase());
@@ -329,5 +330,148 @@ describe('Spreadsheet - Pruebas Avanzadas de Cobertura', () => {
     await sheet.waitOnSpreadsheet();
 
     expect(spreadsheet.hasCell('test!QTotal')).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-016: Graph - addEdge, getEdges, adjacent, adjacentIncoming
+  // ============================================================================
+  it('SHEET-016: Graph addEdge y getEdges mantienen estructura', () => {
+    const g = Graph();
+    g.addEdge('A', 'B');
+    g.addEdge('A', 'C');
+    g.addEdge('B', 'D');
+
+    const { edges, incomingEdges } = g.getEdges();
+    expect(edges.get('A')!.has('B')).toBe(true);
+    expect(edges.get('A')!.has('C')).toBe(true);
+    expect(edges.get('B')!.has('D')).toBe(true);
+    expect(incomingEdges.get('B')!.has('A')).toBe(true);
+    expect(incomingEdges.get('D')!.has('B')).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-017: removeNode with incoming edges
+  // ============================================================================
+  it('SHEET-017: removeNode limpia edges entrantes y salientes', () => {
+    const g = Graph();
+    g.addEdge('A', 'B');
+    g.addEdge('C', 'B');
+    g.removeNode('B');
+
+    const { edges, incomingEdges } = g.getEdges();
+    expect(edges.has('B')).toBe(false);
+    expect(incomingEdges.has('B')).toBe(false);
+  });
+
+  // ============================================================================
+  // SHEET-018: topologicalSort por dependencias
+  // ============================================================================
+  it('SHEET-018: topologicalSort ordena nodos correctamente', () => {
+    const g = Graph();
+    g.addEdge('A', 'B');
+    g.addEdge('B', 'C');
+    g.addEdge('A', 'D');
+
+    const sorted = g.topologicalSort(['A']);
+    // A debe ir primero, luego B o D, C debe ser último
+    expect(sorted.indexOf('A')).toBeLessThan(sorted.indexOf('B'));
+    expect(sorted.indexOf('A')).toBeLessThan(sorted.indexOf('C'));
+    expect(sorted.indexOf('B')).toBeLessThan(sorted.indexOf('C'));
+  });
+
+  // ============================================================================
+  // SHEET-019: setMeta cambia metadata del spreadsheet
+  // ============================================================================
+  it('SHEET-019: setMeta actualiza metadata global', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.setMeta({ budgetType: 'tracking', createdMonths: new Set(['202601']) });
+    const meta = spreadsheet.meta();
+    expect(meta.budgetType).toBe('tracking');
+    expect(meta.createdMonths.has('202601')).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-020: removeDependencies con nombres ya resueltos
+  // ============================================================================
+  it('SHEET-020: removeDependencies con nombre completo (con sheet)', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('testSheet!R1', 10);
+    spreadsheet.set('testSheet!R2', 20);
+
+    spreadsheet.createDynamic('testSheet', 'RSum', {
+      dependencies: ['R1', 'R2'],
+      initialValue: 0,
+      run: (r1: number, r2: number) => r1 + r2,
+    });
+
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('testSheet', 'RSum')).toBe(30);
+
+    // Remove dependency usando nombre completo
+    spreadsheet.removeDependencies('testSheet', 'RSum', ['testSheet!R1']);
+    const node = spreadsheet.getNode('testSheet!RSum');
+    node._run = (r2: number) => r2;
+    spreadsheet.recompute('testSheet!RSum');
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('testSheet', 'RSum')).toBe(20);
+  });
+
+  // ============================================================================
+  // SHEET-021: triggerDatabaseChanges
+  // ============================================================================
+  it('SHEET-021: triggerDatabaseChanges ejecuta sin error', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    const oldValues = new Map([['transactions', [{ id: 'old' }]]]);
+    const newValues = new Map([['transactions', [{ id: 'new' }]]]);
+
+    spreadsheet.triggerDatabaseChanges(oldValues, newValues);
+    await sheet.waitOnSpreadsheet();
+    // Debe ejecutar sin error incluso sin query cells
+    expect(true).toBe(true);
+  });
+
+  // ============================================================================
+  // SHEET-022: recomputeAll recalcula todo
+  // ============================================================================
+  it('SHEET-022: recomputeAll recalcula todas las celdas', async () => {
+    await setupDatabase();
+    const spreadsheet = sheet.get();
+
+    spreadsheet.set('test!RC1', 5);
+    spreadsheet.createDynamic('test', 'RC2', {
+      dependencies: ['RC1'],
+      initialValue: 0,
+      run: (rc1: number) => rc1 * 2,
+    });
+
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('test', 'RC2')).toBe(10);
+
+    spreadsheet.set('test!RC1', 20);
+    spreadsheet.recomputeAll();
+    await sheet.waitOnSpreadsheet();
+    expect(spreadsheet.getCellValue('test', 'RC2')).toBe(40);
+  });
+
+  // ============================================================================
+  // SHEET-023: removeEdge en graph cycle detection
+  // ============================================================================
+  it('SHEET-023: removeEdge elimina dependencia', () => {
+    const g = Graph();
+    g.addEdge('X', 'Y');
+    g.addEdge('Y', 'Z');
+
+    const { edges: before } = g.getEdges();
+    expect(before.get('X')!.has('Y')).toBe(true);
+
+    g.removeEdge('X', 'Y');
+    const { edges: after } = g.getEdges();
+    expect(after.get('X')!.has('Y')).toBe(false);
   });
 });

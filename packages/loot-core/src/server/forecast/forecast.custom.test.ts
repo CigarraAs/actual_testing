@@ -315,4 +315,128 @@ describe('Forecast - Pruebas Adicionales', () => {
     expect(typeof FORECAST_UNASSIGNED_ACCOUNT_ID).toBe('string');
     expect(FORECAST_UNASSIGNED_ACCOUNT_ID.length).toBeGreaterThan(0);
   });
+
+  // ============================================================================
+  // FORE-026: matchesAQLFilter con $oneof
+  // ============================================================================
+  it('FORE-026: matchesAQLFilter con $oneof', () => {
+    const filter = { amount: { $oneof: [100, 200, 300] } };
+    expect(matchesAQLFilter({ amount: 100 }, filter)).toBe(true);
+    expect(matchesAQLFilter({ amount: 200 }, filter)).toBe(true);
+    expect(matchesAQLFilter({ amount: 400 }, filter)).toBe(false);
+  });
+
+  // ============================================================================
+  // FORE-027: matchesAQLFilter con $like
+  // ============================================================================
+  it('FORE-027: matchesAQLFilter con $like', () => {
+    const filter = { notes: { $like: '%mercado%' } };
+    expect(matchesAQLFilter({ notes: 'Compra en mercado local' }, filter)).toBe(true);
+    expect(matchesAQLFilter({ notes: 'Tienda online' }, filter)).toBe(false);
+  });
+
+  // ============================================================================
+  // FORE-028: matchesAQLFilter con $notlike
+  // ============================================================================
+  it('FORE-028: matchesAQLFilter con $notlike', () => {
+    const filter = { notes: { $notlike: '%test%' } };
+    expect(matchesAQLFilter({ notes: 'Producción' }, filter)).toBe(true);
+    expect(matchesAQLFilter({ notes: 'test de calidad' }, filter)).toBe(false);
+  });
+
+  // ============================================================================
+  // FORE-029: matchesAQLFilter con path compuesto
+  // ============================================================================
+  it('FORE-029: matchesAQLFilter con path anidado', () => {
+    const filter = { 'account.id': 'acc-1' };
+    expect(matchesAQLFilter({ account: { id: 'acc-1', name: 'Test' } }, filter)).toBe(true);
+    expect(matchesAQLFilter({ account: { id: 'acc-2' } }, filter)).toBe(false);
+    expect(matchesAQLFilter({}, filter)).toBe(false);
+  });
+
+  // ============================================================================
+  // FORE-030: matchesAQLFilter con null en path
+  // ============================================================================
+  it('FORE-030: matchesAQLFilter con valor null en path', () => {
+    const filter = { 'account.id': 'acc-1' };
+    expect(matchesAQLFilter({ account: null }, filter)).toBe(false);
+    expect(matchesAQLFilter({}, filter)).toBe(false);
+  });
+
+  // ============================================================================
+  // FORE-031: matchesAQLFilter con array en filter
+  // ============================================================================
+  it('FORE-031: matchesAQLFilter con array de condiciones', () => {
+    const filter = { amount: [{ $gte: 10 }, { $lte: 100 }] };
+    expect(matchesAQLFilter({ amount: 50 }, filter)).toBe(true);
+    expect(matchesAQLFilter({ amount: 5 }, filter)).toBe(false);
+    expect(matchesAQLFilter({ amount: 150 }, filter)).toBe(false);
+  });
+
+  // ============================================================================
+  // FORE-032: matchesAQLFilter con booleano
+  // ============================================================================
+  it('FORE-032: matchesAQLFilter con campo booleano', () => {
+    expect(matchesAQLFilter({ cleared: true }, { cleared: true })).toBe(true);
+    expect(matchesAQLFilter({ cleared: false }, { cleared: true })).toBe(false);
+    expect(matchesAQLFilter({ cleared: 1 }, { cleared: true })).toBe(true);
+    expect(matchesAQLFilter({ cleared: 0 }, { cleared: false })).toBe(true);
+  });
+
+  // ============================================================================
+  // FORE-033: resolveAccountIdsFromConditions con op=or
+  // ============================================================================
+  it('FORE-033: resolveAccountIdsFromConditions con OR', async () => {
+    const acc1 = await createAccount('OR-Account-A');
+    const acc2 = await createAccount('OR-Account-B');
+
+    const conditions: RuleConditionEntity[] = [
+      { op: 'is', field: 'account', value: acc1 },
+      { op: 'is', field: 'account', value: acc2 },
+    ];
+
+    const result = await resolveAccountIdsFromConditions(conditions, 'or');
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(2);
+    expect(result!).toContain(acc1);
+    expect(result!).toContain(acc2);
+  });
+
+  // ============================================================================
+  // FORE-034: resolveAccountIdsFromConditions con AND
+  // ============================================================================
+  it('FORE-034: resolveAccountIdsFromConditions con AND mezclado', async () => {
+    const acc1 = await createAccount('AND-Account');
+    await createAccount('Other');
+
+    const conditions: RuleConditionEntity[] = [
+      { op: 'isNot', field: 'account', value: 'some-other-id' },
+    ];
+
+    const result = await resolveAccountIdsFromConditions(conditions, 'and');
+    expect(result).toBeDefined();
+    expect(result!.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // ============================================================================
+  // FORE-035: generateForecast con rango de fechas completo
+  // ============================================================================
+  it('FORE-035: generateForecast con múltiples rangos de fecha', async () => {
+    const accountId = await createAccount('MultiRange', 500);
+    await db.insertTransaction({ account: accountId, amount: -50, date: '2024-01-15' });
+    await db.insertTransaction({ account: accountId, amount: -30, date: '2024-03-20' });
+    await db.insertTransaction({ account: accountId, amount: -20, date: '2024-05-10' });
+
+    const result = await generateForecast({
+      accountIds: [accountId],
+      startDate: '2024-01-01',
+      endDate: '2024-06-30',
+    });
+
+    expect(result.dataPoints.length).toBeGreaterThan(0);
+    const balanceByDate = Object.fromEntries(
+      result.dataPoints.map(({ date, balance }) => [date, balance]),
+    );
+    expect(balanceByDate).toBeDefined();
+  });
 });

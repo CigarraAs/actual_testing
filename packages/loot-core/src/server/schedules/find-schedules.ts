@@ -240,7 +240,7 @@ async function monthly2ndor4th(startDate, accountId) {
   );
 }
 
-async function findStartDate(schedule) {
+export async function findStartDate(schedule) {
   const conditions = schedule._conditions;
   const dateCond = conditions.find(c => c.field === 'date');
   let currentConfig = dateCond.value;

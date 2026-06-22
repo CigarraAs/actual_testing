@@ -15,6 +15,12 @@ export default defineConfig({
       return type === 'stderr';
     },
     maxWorkers: 2,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      reportsDirectory: './coverage',
+      clean: true,
+    },
   },
   ssr: {
     resolve: { conditions: ['electron', 'module', 'node', 'development'] },

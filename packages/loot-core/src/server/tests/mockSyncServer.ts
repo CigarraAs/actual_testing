@@ -89,6 +89,54 @@ handlers['/gocardless/accounts'] = () => {
   return { accounts: currentMockData.accounts };
 };
 
+handlers['/simplefin/accounts'] = () => {
+  return { accounts: currentMockData.simplefinAccounts || currentMockData.accounts };
+};
+
+handlers['/simplefin/transactions'] = () => {
+  return {
+    balances: currentMockData.simplefinTransactions?.balances || [],
+    startingBalance: currentMockData.simplefinTransactions?.startingBalance || 0,
+    transactions: currentMockData.simplefinTransactions?.transactions || {
+      all: [],
+      booked: [],
+      pending: [],
+    },
+  };
+};
+
+handlers['/pluggyai/accounts'] = () => {
+  return { accounts: currentMockData.pluggyaiAccounts || [] };
+};
+
+handlers['/pluggyai/transactions'] = () => {
+  return {
+    balances: currentMockData.pluggyaiTransactions?.balances || [],
+    startingBalance: currentMockData.pluggyaiTransactions?.startingBalance || 0,
+    transactions: currentMockData.pluggyaiTransactions?.transactions || {
+      all: [],
+      booked: [],
+      pending: [],
+    },
+  };
+};
+
+handlers['/enablebanking/accounts'] = () => {
+  return { accounts: currentMockData.enablebankingAccounts || [] };
+};
+
+handlers['/enablebanking/transactions'] = () => {
+  return {
+    balances: currentMockData.enablebankingTransactions?.balances || [],
+    startingBalance: currentMockData.enablebankingTransactions?.startingBalance || 0,
+    transactions: currentMockData.enablebankingTransactions?.transactions || {
+      all: [],
+      booked: [],
+      pending: [],
+    },
+  };
+};
+
 export const filterMockData = func => {
   const copied = JSON.parse(JSON.stringify(defaultMockData));
   currentMockData = func(copied);

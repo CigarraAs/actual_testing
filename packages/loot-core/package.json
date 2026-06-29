@@ -170,7 +170,7 @@
     "build": "tsgo -b",
     "prepack": "yarn build && ts-node scripts/add-types-conditions.mts",
     "postpack": "ts-node scripts/restore-package-json.mts",
-    "test:integration": "vitest run src/server/integration-tests/**/*.test.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@jlongster/sql.js": "^1.6.7",

@@ -61,7 +61,8 @@
     "typecheck": "tsgo -p tsconfig.root.json --noEmit && lage typecheck",
     "check:tsconfig-references": "workspaces-to-typescript-project-references --check",
     "sync:tsconfig-references": "workspaces-to-typescript-project-references",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:integration": "yarn workspace @actual-app/core test:integration"
   },
   "devDependencies": {
     "@monorepo-utils/workspaces-to-typescript-project-references": "^2.10.3",

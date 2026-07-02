@@ -259,7 +259,7 @@ export const schemaConfig: SchemaConfig = {
     function orderBy(orders) {
       // If order was specified, always add id as the last sort to make
       // it deterministic
-      if (orders.length > 0) {
+      if (orders && orders.length > 0) {
         return orders.concat(['id']);
       }
 

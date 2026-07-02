@@ -3,7 +3,6 @@ import * as fs from '#platform/server/fs';
 import { createApp } from '#server/app';
 import * as db from '#server/db';
 import { PostError } from '#server/errors';
-import { getDefaultDocumentDir } from '#server/main';
 import { mutator } from '#server/mutators';
 import { post } from '#server/post';
 import {
@@ -14,6 +13,10 @@ import { getServer } from '#server/server-config';
 import { undoable } from '#server/undo';
 import { stringToInteger } from '#shared/util';
 import type { GlobalPrefs, MetadataPrefs, SyncedPrefs } from '#types/prefs';
+
+function getDefaultDocumentDir() {
+  return fs.join(process.env.ACTUAL_DOCUMENT_DIR || '', 'Actual');
+}
 
 export type PreferencesHandlers = {
   'preferences/save': typeof saveSyncedPrefs;

@@ -9347,6 +9347,84 @@
           "transaction_type": "special"
         }
       ]
+    },
+    "simplefinAccounts": [
+      {
+        "account_id": "sf-acc-001",
+        "balances": { "available": 239, "current": 239, "limit": null },
+        "mask": "0000",
+        "name": "SimpleFIN Checking",
+        "official_name": "SimpleFIN Interest Checking",
+        "subtype": "checking",
+        "type": "depository"
+      }
+    ],
+    "simplefinTransactions": {
+      "balances": [
+        {
+          "balanceAmount": { "amount": "239", "currency": "USD" },
+          "balanceType": "expected",
+          "referenceDate": "2017-10-17"
+        }
+      ],
+      "startingBalance": 23900,
+      "transactions": {
+        "all": [],
+        "booked": [],
+        "pending": []
+      }
+    },
+    "pluggyaiAccounts": [
+      {
+        "account_id": "pluggy-acc-001",
+        "balances": { "available": 455, "current": 455, "limit": null },
+        "mask": "0000",
+        "name": "PluggyAI Checking",
+        "official_name": "PluggyAI Interest Checking",
+        "subtype": "checking",
+        "type": "depository"
+      }
+    ],
+    "pluggyaiTransactions": {
+      "balances": [
+        {
+          "balanceAmount": { "amount": "455", "currency": "BRL" },
+          "balanceType": "expected",
+          "referenceDate": "2017-10-17"
+        }
+      ],
+      "startingBalance": 45500,
+      "transactions": {
+        "all": [],
+        "booked": [],
+        "pending": []
+      }
+    },
+    "enablebankingAccounts": [
+      {
+        "account_id": "eb-acc-001",
+        "balances": { "available": 787, "current": 787, "limit": null },
+        "mask": "0000",
+        "name": "EnableBanking Checking",
+        "official_name": "EnableBanking Interest Checking",
+        "subtype": "checking",
+        "type": "depository"
+      }
+    ],
+    "enablebankingTransactions": {
+      "balances": [
+        {
+          "balanceAmount": { "amount": "787", "currency": "EUR" },
+          "balanceType": "expected",
+          "referenceDate": "2017-10-17"
+        }
+      ],
+      "startingBalance": 78700,
+      "transactions": {
+        "all": [],
+        "booked": [],
+        "pending": []
+      }
     }
   }
 }

@@ -869,7 +869,7 @@ function expandStar(state, expr) {
 
 const compileSelect = saveStack(
   'select',
-  (state, exprs, isAggregate, orders) => {
+  (state, exprs = ['*'], isAggregate, orders) => {
     // Always include the id if it's not an aggregate
     if (!isAggregate && !exprs.includes('id') && !exprs.includes('*')) {
       exprs = exprs.concat(['id']);
@@ -988,17 +988,17 @@ export function isAggregateQuery(queryState) {
   // either an aggregate function is used in `select`
   // or a `groupBy` exists
 
-  if (queryState.groupExpressions.length > 0) {
+  if (queryState.groupExpressions && queryState.groupExpressions.length > 0) {
     return true;
   }
 
-  return !!queryState.selectExpressions.find(expr => {
+  return !!(queryState.selectExpressions && queryState.selectExpressions.find(expr => {
     if (typeof expr !== 'string') {
       const [_, value] = Object.entries(expr)[0];
       return isAggregateFunction(value);
     }
     return false;
-  });
+  }));
 }
 
 // TODO: Type this based on schema/index

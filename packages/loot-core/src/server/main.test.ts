@@ -39,6 +39,9 @@ async function createTestBudget(name) {
   const budgetPath = fs.join(__dirname, '/../mocks/files/budgets/test-budget');
   fs._setDocumentDir(fs.join(budgetPath, '..'));
 
+  if (await fs.exists(budgetPath)) {
+    await fs.removeDirRecursively(budgetPath);
+  }
   await fs.mkdir(budgetPath);
   await fs.copyFile(
     fs.join(templatePath, 'metadata.json'),
@@ -52,6 +55,7 @@ async function createTestBudget(name) {
 
 describe('Budgets', () => {
   afterEach(async () => {
+    await db.closeDatabase();
     fs._setDocumentDir(null);
     const budgetPath = fs.join(
       __dirname,

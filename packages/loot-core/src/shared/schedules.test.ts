@@ -75,6 +75,12 @@ describe('schedules', () => {
   });
 
   describe('getStatus', () => {
+    // Prueba de integracion: verifica estado programado a 15 dias futuro
+    it('returns scheduled if the date is exactly 15 days in the future', () => {
+      const fifteenDaysOut = monthUtils.addDays(today, 15);
+      expect(getStatus(fifteenDaysOut, false, false, '7')).toBe('scheduled');
+    });
+
     it('returns completed if completed', () => {
       expect(getStatus(todayString, true, false, '7')).toBe('completed');
     });
@@ -118,7 +124,6 @@ describe('schedules', () => {
       );
     });
   });
-
   describe('getRecurringDescription', () => {
     it('describes weekly interval', () => {
       expect(

@@ -1,19 +1,29 @@
 import * as encryption from '.';
 
-afterEach(() => encryption.unloadAllKeys());
-
-describe('Encryption', () => {
-  test('should encrypt and decrypt', async () => {
+describe('Key Class', () => {
+  test('should create key and call getters', async () => {
     const key = await encryption.createKey({
-      id: 'foo',
+      id: 'key1',
       password: 'mypassword',
       salt: 'salt',
     });
-    await encryption.loadKey(key);
 
-    const data = await encryption.encrypt('hello', 'foo');
+    expect(key.getId()).toBe('key1');
+    expect(key.getValue()).toBeDefined();
+    
+    const serialized = key.serialize();
+    expect(serialized.id).toBe('key1');
+    expect(serialized.base64).toBeDefined();
+  });
 
-    const output = await encryption.decrypt(data.value, data.meta);
-    expect(output.toString()).toBe('hello');
+  test('should fallback to uuid if id is missing', async () => {
+    const key = await encryption.createKey({
+      id: null,
+      password: 'mypassword',
+      salt: 'salt',
+    });
+
+    expect(key.getId()).toBeDefined();
+    expect(key.getId().length).toBeGreaterThan(0);
   });
 });

@@ -10,6 +10,13 @@ export default defineConfig({
         extends: 'packages/loot-core/vitest.web.config.ts',
         test: { name: 'loot-core-web', dir: 'packages/loot-core' },
       },
+      {
+        extends: 'packages/loot-core/vitest.integration.config.ts',
+        test: {
+          name: 'loot-core-integration',
+          dir: 'packages/loot-core',
+        },
+      },
     ],
     onConsoleLog: (log, type) => {
       // print only console.error

@@ -1,68 +1,131 @@
-# actual_testing
+# ¿Qué es Actual?
+Actual (también conocido como Actual Budget) es una herramienta de finanzas personales que se enfoca en la privacidad y el control de tus datos. Es 100% gratuita, de código abierto y opera bajo el principio "local-first" (primero local)
+
+Una app de finanzas personales con paneles, calendario de transacciones, listado de cuentas, gestión de beneficiarios y pagos programados.
+
+- **Para qué sirve:** Ver tus ingresos/gastos, revisar transacciones, crear reglas para beneficiarios y controlar pagos programados.
+
+## Imagen Referencial del funcionamiento 
 
 <p align="center">
   <img src="/demo.png" alt="Actualbudget" />
 </p>
 
-## Getting Started
+*Figura: Vista principal de la aplicación con paneles y navegación.*
 
-Actual is a local-first personal finance tool. It is 100% free and open-source, written in NodeJS, it has a synchronization element so that all your changes can move between devices without any heavy lifting.
+## Secciones de funcionamiento:
 
-If you are interested in contributing, or want to know how development works, see our [contributing](https://actualbudget.org/docs/contributing/) document we would love to have you.
+- Reportes (panel principal): muestra métricas clave y gráficos (ingresos, gastos, patrimonio, flujo de caja).
+  - Imagen:
 
-Want to say thanks? Click the ⭐ at the top of the page.
+    ![Reportes](resources_readme/menu_principal.png)
 
-## Key Links
+    *Figura: Panel principal con métricas y gráficos resumidos.*
 
-- Actual [discord](https://discord.gg/pRYNYr4W5A) community.
-- Actual [Community Documentation](https://actualbudget.org/docs)
-- [Frequently asked questions](https://actualbudget.org/docs/faq)
+- Calendario de transacciones: vista por día con barras de ingresos/egresos y detalles al pasar el cursor.
+  - Imagen:
 
-## Installation
+    ![Calendario ingresos/egresos](resources_readme/calendario_ingresos_egresos.png)
 
-There are four ways to deploy Actual:
+    *Figura: Calendario mostrando barras diarias de ingresos y egresos.*
 
-1. One-click deployment [via PikaPods](https://www.pikapods.com/pods?run=actual) (~1.40 $/month) - recommended for non-technical users
-1. Managed hosting [via Fly.io](https://actualbudget.org/docs/install/fly) (~1.50 $/month)
-1. Self-hosted by using [a Docker image](https://actualbudget.org/docs/install/docker)
-1. Local-only apps - [downloadable Windows, Mac and Linux apps](https://actualbudget.org/download/) you can run on your device
+- Todas las cuentas (transacciones): lista de movimientos con filtro por cuenta, categorías y estados.
+  - Imagen:
 
-Learn more in the [installation instructions docs](https://actualbudget.org/docs/install/).
+    ![Todas las cuentas](resources_readme/apartado_todas_las_cuentas.png)
 
-## Run From Source on Windows
+    *Figura: Listado de transacciones con filtros por cuenta.*
 
-### Prerequisites
+- Reportes (widgets): métricas grandes y mini-gráficos para comparar periodos y presupuesto.
+  - Imagen:
+
+    ![Reportes - widgets](resources_readme/apartado_reports.png)
+
+    *Figura: Widgets de reportes mostrando comparativas y tendencias.*
+
+  - Imágenes adicionales de reportes:
+
+
+    ![Reportes - Total Income](resources_readme/apartado_reports_TotalIncome.png)
+
+    *Figura: Desglose de ingresos totales por periodo.*
+
+
+    ![Reportes - Historial](resources_readme/apartado_reports_Historial.png)
+
+    *Figura: Historial de transacciones y cambios en el tiempo.*
+
+
+    ![Reportes - Por cada banco](resources_readme/apartado_porCadaBanco.png)
+
+    *Figura: Comparativa de cuentas por banco.*
+
+
+    ![Reglas automáticas](resources_readme/apartado_rules.png)
+
+    *Figura: Configuración de reglas automáticas para beneficiarios.*
+
+
+    ![Presupuesto](resources_readme/apartado_budget.png)
+
+    *Figura: Vista de presupuesto con categorías y límites.*
+
+
+    ![Todas las cuentas (vista)](resources_readme/apartado_AllAccounts.png)
+
+    *Figura: Vista detallada de todas las cuentas y movimientos.*
+
+- Payees (beneficiarios): listado de beneficiarios y botones para crear reglas automáticas.
+  - Imagen:
+
+    ![Payees](resources_readme/apartado_payees.png)
+
+    *Figura: Gestión de beneficiarios y reglas automáticas.*
+
+- Schedules / Calendario de pagos: lista de pagos programados con estado (Missed, Due, Upcoming, Scheduled).
+  - Imagen:
+
+    ![Calendario pagos](resources_readme/apartado_calendario.png)
+
+    *Figura: Pagos programados con estados y fechas.*
+
+
+
+
+## Para correrlo en Windows
+
+### Prerrequisitos
 
 - Git
-- Node.js 22 or newer (`node -v`)
-- Corepack (included with modern Node.js)
+- Node.js 22 o el más reciente (`node -v`)
+- Corepack (se incluye en el Node.js)
 
-### Step-by-step setup
+### Vamos paso a paso
 
-From a terminal (PowerShell recommended):
+Esto se pega en el terminal
 
 ```powershell
-git clone <REPOSITORY_URL>
-cd <CLONED_FOLDER>\actual
+git clone https://github.com/actualbudget/actual.git
+cd .\actual
 
 corepack prepare yarn@4.13.0 --activate
 corepack yarn -v
 corepack yarn install
 ```
 
-### Run the app on Windows
+### Lo corremos en Windows
 
-Do not use `corepack yarn start` in plain Windows shells because it invokes a `sh` script.
+Nota: no usar `corepack yarn start` porque esto invoca un cript `sh` que no se puede ejecutar en Windows.
 
-Use one of the following:
+Usamos uno de los siguientes de acuerdo a lo que queramos:
 
-1. Local-only frontend (no sync server):
+1. Local (sin sincronización de servidor):
 
 ```powershell
 corepack yarn workspace @actual-app/web start --mode=browser
 ```
 
-2. Frontend + sync server (open a second terminal):
+2. Frontend + sync server:
 
 ```powershell
 # Terminal 1
@@ -72,68 +135,17 @@ corepack yarn workspace @actual-app/web start --mode=browser
 corepack yarn workspace @actual-app/sync-server start
 ```
 
-Open the URL printed by Vite (typically `http://localhost:3001`).
+Abrir la Url (Generalmente `http://localhost:3001`).
 
 ### First-run choices
 
-- Local-only mode: choose "Don't use a server", then "Start fresh" or "Try Demo".
-- With server mode: create and confirm a password, then continue with "OK".
+- Modo solo local: elige "Don't use a server" y luego "Start fresh" o "Try Demo".
+- Con modo servidor: crea y confirma una contraseña, luego continúa con "OK".
 
-### Stop everything
+### Para parar todo
 
-In each terminal running a process, press `Ctrl+C`.
+Presiona `Ctrl+C`.
 
-## Ready to Start Budgeting?
-
-Read about [Envelope budgeting](https://actualbudget.org/docs/getting-started/envelope-budgeting) to know more about the idea behind Actual Budget.
-
-### Are you new to budgeting or want to start fresh?
-
-Check out the community's [Starting Fresh](https://actualbudget.org/docs/getting-started/starting-fresh) guide so you can quickly get up and running!
-
-### Are you migrating from other budgeting apps?
-
-Check out the community's [Migration](https://actualbudget.org/docs/migration/) guide to start jumping on the Actual Budget train!
-
-## Documentation
-
-We have a wide range of documentation on how to use Actual, this is all available in our [Community Documentation](https://actualbudget.org/docs), this includes topics on Budgeting, Account Management, Tips & Tricks and some documentation for developers.
-
-## Contributing
-
-Actual is a community driven product. Learn more about [contributing to Actual](https://actualbudget.org/docs/contributing/).
-
-### Code structure
-
-The Actual app is split up into a few packages:
-
-- loot-core - The core application that runs on any platform
-- desktop-client - The desktop UI
-- desktop-electron - The desktop app
-
-More information on the project structure is available in our [community documentation](https://actualbudget.org/docs/contributing/project-details).
-
-### Feature Requests
-
-Current feature requests can be seen [here](https://github.com/actualbudget/actual/issues?q=is%3Aissue+label%3A%22needs+votes%22+sort%3Areactions-%2B1-desc).
-Vote for your favorite requests by reacting :+1: to the top comment of the request.
-
-To add new feature requests, open a new Issue of the "Feature Request" type.
-
-### Translation
-
-Make Actual Budget accessible to more people by helping with the [Internationalization](https://actualbudget.org/docs/contributing/i18n/) of Actual. We are using a crowd sourcing tool to manage the translations, see our [Weblate Project](https://hosted.weblate.org/projects/actualbudget/). Weblate proudly supports open-source software projects through their [Libre plan](https://weblate.org/en/hosting/#libre).
-
-<a href="https://hosted.weblate.org/engage/actualbudget/">
-<img src="https://hosted.weblate.org/widget/actualbudget/actual/287x66-grey.png" alt="Translation status" />
-</a>
-
-## Repo Activity
-
-![Alt](https://repobeats.axiom.co/api/embed/e20537dd8b74956f86736726ccfbc6f0565bec22.svg 'Repobeats analytics image')
-
-## Sponsors
-
-Thanks to our wonderful sponsors who make Actual Budget possible!
-
+## Documentación
+[Community Documentation](https://actualbudget.org/docs)
 <a href="https://www.netlify.com"> <img src="https://www.netlify.com/v3/img/components/netlify-color-accent.svg" alt="Deploys by Netlify" /> </a>

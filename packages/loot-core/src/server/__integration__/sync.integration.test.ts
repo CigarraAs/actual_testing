@@ -437,5 +437,114 @@ describe('Sync Integration Tests', () => {
         removeListener();
       }
     });
+
+    /**
+     * F17 applyMessages - Verificación: Que solo los mensajes nuevos se apliquen a negocio.
+     * Valida explícitamente que si se envían un mensaje nuevo y un mensaje antiguo,
+     * solo el mensaje nuevo es procesado por la función de aplicación y guardado en preferencias
+     * (el antiguo se ignora en la lógica de negocio).
+     */
+    it('debe verificar que solo los mensajes marcados como nuevos se aplican a las preferencias y lógica de negocio', async () => {
+      const msgNew: Message = {
+        dataset: 'prefs',
+        row: 'budgetType',
+        column: 'value',
+        value: 'report',
+        timestamp: Timestamp.send(),
+      };
+
+      const msgOld: Message = {
+        dataset: 'prefs',
+        row: 'budgetType',
+        column: 'value',
+        value: 'rollover',
+        timestamp: Timestamp.send(),
+      };
+
+      // El primero es nuevo y el segundo es antiguo
+      vi.mocked(syncHelpers.compareMessages).mockResolvedValue([
+        msgNew,
+        { ...msgOld, old: true },
+      ]);
+
+      await applyMessages([msgNew, msgOld]);
+
+      // Verificamos que se inserte en la base de datos de mensajes CRDT para ambos
+      const crdtMsgs = await db.all<db.DbCrdtMessage>(
+        'SELECT * FROM messages_crdt WHERE dataset = ?',
+        ['prefs']
+      );
+      expect(crdtMsgs.length).toBe(2);
+
+      // Verificamos que savePrefs se haya llamado con la preferencia del mensaje nuevo y no con la del mensaje antiguo
+      expect(prefs.savePrefs).toHaveBeenCalledWith(
+        expect.objectContaining({ budgetType: 'report' }),
+        expect.anything()
+      );
+    });
+
+    /**
+     * F17 applyMessages - Verificación: Que se actualice el árbol de Merkle.
+     * Valida explícitamente que la función actualice el árbol de Merkle llamando
+     * a merkle.insert para cada mensaje (nuevo u antiguo) y a merkle.prune al final,
+     * y que guarde el nuevo estado del reloj en la base de datos local.
+     */
+    it('debe actualizar el árbol de Merkle llamando a merkle.insert y merkle.prune y almacenar el reloj resultante', async () => {
+      const msg1: Message = {
+        dataset: 'transactions',
+        row: 'txn-m1',
+        column: 'amount',
+        value: 100,
+        timestamp: Timestamp.send(),
+      };
+
+      const msg2: Message = {
+        dataset: 'transactions',
+        row: 'txn-m2',
+        column: 'amount',
+        value: 200,
+        timestamp: Timestamp.send(),
+      };
+
+      await applyMessages([msg1, msg2]);
+
+      // Verificamos que se inserte cada timestamp en el árbol de Merkle
+      expect(merkle.insert).toHaveBeenCalledWith(expect.anything(), msg1.timestamp);
+      expect(merkle.insert).toHaveBeenCalledWith(expect.anything(), msg2.timestamp);
+
+      // Verificamos que se haga prune al final
+      expect(merkle.prune).toHaveBeenCalled();
+
+      // Verificamos que se guarde el reloj actualizado en la base de datos 'messages_clock'
+      const clocks = await db.all('SELECT * FROM messages_clock');
+      expect(clocks.length).toBeGreaterThan(0);
+    });
+
+    /**
+     * F17 applyMessages - Verificación: Que se notifique a los listeners.
+     * Valida explícitamente que todos los callbacks de eventos agregados vía
+     * addSyncListener reciban la notificación de aplicación.
+     */
+    it('debe notificar a los listeners de sincronización tras aplicar los mensajes', async () => {
+      const msg: Message = {
+        dataset: 'transactions',
+        row: 'txn-notify',
+        column: 'amount',
+        value: 50,
+        timestamp: Timestamp.send(),
+      };
+
+      const spyListener = vi.fn();
+      const removeListener = addSyncListener(spyListener);
+
+      try {
+        await applyMessages([msg]);
+
+        // Verificamos que el listener se ejecute
+        expect(spyListener).toHaveBeenCalledTimes(1);
+      } finally {
+        removeListener();
+      }
+    });
   });
 });

@@ -22,80 +22,7 @@ import {
 import * as mockSyncServer from '../tests/mockSyncServer';
 import * as exceptions from '#platform/exceptions';
 
-// Configurar mocks preservando la implementación original por defecto
-vi.mock('#server/db', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#server/db')>();
-  return {
-    ...actual,
-    transaction: vi.fn(actual.transaction),
-  };
-});
-
-vi.mock('@actual-app/crdt', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@actual-app/crdt')>();
-  return {
-    ...actual,
-    merkle: {
-      ...actual.merkle,
-      insert: vi.fn(actual.merkle.insert),
-      prune: vi.fn(actual.merkle.prune),
-    },
-  };
-});
-
-vi.mock('#server/sheet', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#server/sheet')>();
-  return {
-    ...actual,
-    get: vi.fn(actual.get),
-  };
-});
-
-vi.mock('#server/budget/base', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#server/budget/base')>();
-  return {
-    ...actual,
-    triggerBudgetChanges: vi.fn(actual.triggerBudgetChanges),
-  };
-});
-
-vi.mock('#server/undo', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#server/undo')>();
-  return {
-    ...actual,
-    appendMessages: vi.fn(actual.appendMessages),
-  };
-});
-
-vi.mock('#server/prefs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#server/prefs')>();
-  return {
-    ...actual,
-    savePrefs: vi.fn(actual.savePrefs),
-    loadPrefs: vi.fn(actual.loadPrefs),
-  };
-});
-
-vi.mock('#platform/server/connection', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#platform/server/connection')>();
-  return {
-    ...actual,
-    send: vi.fn(actual.send),
-  };
-});
-
-vi.mock('../sync', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../sync')>();
-  return {
-    ...actual,
-    syncHelpers: {
-      ...actual.syncHelpers,
-      compareMessages: vi.fn(actual.syncHelpers?.compareMessages),
-    },
-  };
-});
-
-describe('Sync Integration Tests', () => {
+// describe('Sync Integration Tests', () => {
   let spyCaptureException;
 
   beforeEach(async () => {
@@ -210,10 +137,11 @@ describe('Sync Integration Tests', () => {
    */
   describe('applyMessages', () => {
     let mockSheet;
+    let spies: any[] = [];
 
     beforeEach(() => {
       // Simular db.transaction para ejecutar el callback inmediatamente
-      vi.mocked(db.transaction).mockImplementation((cb) => {
+      const spyTx = vi.spyOn(db, 'transaction').mockImplementation((cb) => {
         if (typeof cb === 'function') {
           return cb();
         }
@@ -221,22 +149,25 @@ describe('Sync Integration Tests', () => {
       });
 
       // Simular compareMessages para que devuelva los mensajes sin cambios por defecto
-      vi.mocked(syncHelpers.compareMessages).mockImplementation(async (messages) => messages);
+      const spyCompare = vi.spyOn(syncHelpers, 'compareMessages').mockImplementation(async (messages) => messages);
 
       // Simular merkle.insert y merkle.prune
-      vi.mocked(merkle.insert).mockImplementation((merkleTrie, timestamp) => {
+      const spyInsert = vi.spyOn(merkle, 'insert').mockImplementation((merkleTrie, timestamp) => {
         return {
           ...(merkleTrie || {}),
           [timestamp.toString()]: true,
         };
       });
-      vi.mocked(merkle.prune).mockImplementation((merkleTrie) => merkleTrie);
+      const spyPrune = vi.spyOn(merkle, 'prune').mockImplementation((merkleTrie) => merkleTrie);
 
       // Simular triggerBudgetChanges
-      vi.mocked(budgetBase.triggerBudgetChanges).mockImplementation(() => { });
+      const spyTrigger = vi.spyOn(budgetBase, 'triggerBudgetChanges').mockImplementation(() => {});
 
       // Simular undo.appendMessages
-      vi.mocked(undo.appendMessages).mockImplementation(() => { });
+      const spyUndo = vi.spyOn(undo, 'appendMessages').mockImplementation(() => {});
+
+      // Simular prefs.savePrefs
+      const spyPrefs = vi.spyOn(prefs, 'savePrefs').mockImplementation(async () => {});
 
       // Simular sheet.get
       mockSheet = {
@@ -246,17 +177,13 @@ describe('Sync Integration Tests', () => {
         recompute: vi.fn(),
         hasCell: vi.fn().mockReturnValue(true),
       };
-      vi.mocked(sheet.get).mockReturnValue(mockSheet as any);
+      const spySheet = vi.spyOn(sheet, 'get').mockReturnValue(mockSheet as any);
+
+      spies = [spyTx, spyCompare, spyInsert, spyPrune, spyTrigger, spyUndo, spyPrefs, spySheet];
     });
 
     afterEach(() => {
-      vi.mocked(db.transaction).mockRestore();
-      vi.mocked(syncHelpers.compareMessages).mockRestore();
-      vi.mocked(merkle.insert).mockRestore();
-      vi.mocked(merkle.prune).mockRestore();
-      vi.mocked(budgetBase.triggerBudgetChanges).mockRestore();
-      vi.mocked(undo.appendMessages).mockRestore();
-      vi.mocked(sheet.get).mockRestore();
+      spies.forEach(spy => spy.mockRestore());
     });
 
     /**

@@ -450,4 +450,197 @@ describe('Budget Integration Tests', () => {
     );
     expect(monthRow?.buffered).toBe(50000);
   });
+
+  // ========================================================================
+  // F07 – coverOverspending
+  // ========================================================================
+
+  async function setupCoverEnv() {
+    await setupBudgetEnv();
+    await db.insertAccount({
+      id: 'checking',
+      name: 'Checking',
+      offbudget: 0,
+    });
+  }
+
+  /**
+   * INT-BUD-11: Cubrir sobregasto desde otra categoría con fondos suficientes
+   * (F07 coverOverspending).
+   * Tarea: S3-F3.2-07 — F07 coverOverspending
+   *
+   * Verifica que:
+   * - El presupuesto de la categoría sobregastada (to) aumenta con el monto cubierto.
+   * - El presupuesto de la categoría fuente (from) disminuye en el monto cubierto.
+   * - Se registran notas de movimiento.
+   */
+  it('INT-BUD-11: Cubrir sobregasto desde otra categoría con fondos suficientes', async () => {
+    await setupCoverEnv();
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'envelope')`,
+    );
+
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'groceries-cat',
+      month: '2026-06',
+      amount: 50000,
+    });
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'rent-cat',
+      month: '2026-06',
+      amount: 80000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    await db.insertTransaction({
+      id: 'txn-spend',
+      account: 'checking',
+      category: 'groceries-cat',
+      date: '2026-06-10',
+      amount: -70000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    await runHandler(handlers['budget/cover-overspending'], {
+      month: '2026-06',
+      to: 'groceries-cat',
+      from: 'rent-cat',
+      amount: 10000,
+      currencyCode: 'USD',
+    });
+    await sheet.waitOnSpreadsheet();
+
+    const groceries = await db.first<{ amount: number }>(
+      `SELECT amount FROM zero_budgets WHERE month = 202606 AND category = 'groceries-cat'`,
+    );
+    const rent = await db.first<{ amount: number }>(
+      `SELECT amount FROM zero_budgets WHERE month = 202606 AND category = 'rent-cat'`,
+    );
+    expect(groceries?.amount).toBe(60000); // 50000 + 10000
+    expect(rent?.amount).toBe(70000); // 80000 - 10000
+
+    const note = await db.first<{ note: string }>(
+      `SELECT note FROM notes WHERE id = ?`,
+      ['budget-2026-06'],
+    );
+    expect(note).toBeDefined();
+    expect(note?.note).toContain('Groceries');
+    expect(note?.note).toContain('Rent');
+  });
+
+  /**
+   * INT-BUD-12: Cubrir sobregasto desde "To Budget"
+   * (F07 coverOverspending).
+   * Tarea: S3-F3.2-07 — F07 coverOverspending
+   *
+   * Verifica que:
+   * - El presupuesto de la categoría sobregastada aumenta.
+   * - No se descuenta de ninguna categoría (el dinero sale del disponible).
+   * - Se registra nota de movimiento con origen "To Budget".
+   */
+  it('INT-BUD-12: Cubrir sobregasto desde "To Budget"', async () => {
+    await setupCoverEnv();
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'envelope')`,
+    );
+
+    await db.insertTransaction({
+      id: 'txn-income',
+      account: 'checking',
+      category: 'salary-cat',
+      date: '2026-06-15',
+      amount: 100000,
+    });
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'groceries-cat',
+      month: '2026-06',
+      amount: 50000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    await db.insertTransaction({
+      id: 'txn-spend',
+      account: 'checking',
+      category: 'groceries-cat',
+      date: '2026-06-10',
+      amount: -70000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    await runHandler(handlers['budget/cover-overspending'], {
+      month: '2026-06',
+      to: 'groceries-cat',
+      from: 'to-budget',
+      amount: 10000,
+      currencyCode: 'USD',
+    });
+    await sheet.waitOnSpreadsheet();
+
+    const groceries = await db.first<{ amount: number }>(
+      `SELECT amount FROM zero_budgets WHERE month = 202606 AND category = 'groceries-cat'`,
+    );
+    expect(groceries?.amount).toBe(60000); // 50000 + 10000
+
+    const note = await db.first<{ note: string }>(
+      `SELECT note FROM notes WHERE id = ?`,
+      ['budget-2026-06'],
+    );
+    expect(note).toBeDefined();
+    expect(note?.note).toContain('To Budget');
+    expect(note?.note).toContain('Groceries');
+  });
+
+  /**
+   * INT-BUD-13: Cubrir sobregasto con fondos insuficientes en origen
+   * (F07 coverOverspending).
+   * Tarea: S3-F3.2-07 — F07 coverOverspending
+   *
+   * Verifica que:
+   * - coverableAmount se trunca al leftover disponible de la categoría fuente.
+   * - Solo se cubre el monto que la fuente puede aportar (no se excede).
+   */
+  it('INT-BUD-13: Cubrir sobregasto limitado por fondos insuficientes en origen', async () => {
+    await setupCoverEnv();
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'envelope')`,
+    );
+
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'groceries-cat',
+      month: '2026-06',
+      amount: 50000,
+    });
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'rent-cat',
+      month: '2026-06',
+      amount: 20000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    await db.insertTransaction({
+      id: 'txn-spend',
+      account: 'checking',
+      category: 'groceries-cat',
+      date: '2026-06-10',
+      amount: -100000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    await runHandler(handlers['budget/cover-overspending'], {
+      month: '2026-06',
+      to: 'groceries-cat',
+      from: 'rent-cat',
+      currencyCode: 'USD',
+    });
+    await sheet.waitOnSpreadsheet();
+
+    const groceries = await db.first<{ amount: number }>(
+      `SELECT amount FROM zero_budgets WHERE month = 202606 AND category = 'groceries-cat'`,
+    );
+    const rent = await db.first<{ amount: number }>(
+      `SELECT amount FROM zero_budgets WHERE month = 202606 AND category = 'rent-cat'`,
+    );
+    expect(groceries?.amount).toBe(70000); // 50000 + min(50000, 20000) = 70000
+    expect(rent?.amount).toBe(0); // 20000 - 20000 = 0
+  });
 });

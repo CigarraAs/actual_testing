@@ -222,7 +222,7 @@ describe('Sync Integration Tests', () => {
         ['txn-1']
       );
       expect(crdtMsgs.length).toBe(1);
-      expect(crdtMsgs[0].value).toBe('5000');
+      expect(crdtMsgs[0].value).toBe('N:5000');
     });
 
     /**

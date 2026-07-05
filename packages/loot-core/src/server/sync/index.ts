@@ -222,6 +222,10 @@ async function compareMessages(messages: Message[]): Promise<Message[]> {
   return newMessages;
 }
 
+export const syncHelpers = {
+  compareMessages,
+};
+
 // This is the fast path `apply` function when in "import" mode.
 // There's no need to run through the whole sync system when
 // importing, but **there is a caveat**: because we don't run sync
@@ -267,7 +271,7 @@ export const applyMessages = sequential(async (messages: Message[]) => {
     // already applied messages and determines if a message is old or
     // not. An "old" message doesn't need to be applied, but it still
     // needs to be put into the merkle trie to maintain the hash.
-    messages = await compareMessages(messages);
+    messages = await syncHelpers.compareMessages(messages);
   }
 
   messages = [...messages].sort((m1, m2) => {

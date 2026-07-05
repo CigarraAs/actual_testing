@@ -4,15 +4,95 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Timestamp } from '@actual-app/crdt';
 
 import * as post from '#server/post';
-import * as prefs from '#server/prefs';
+import * as db from '#server/db';
+import * as undo from '#server/undo';
+import * as sheet from '#server/sheet';
+import * as budgetBase from '#server/budget/base';
+import * as connection from '#platform/server/connection';
 import {
   batchMessages,
   sendMessages,
   setSyncingMode,
   applyMessages,
+  syncHelpers,
+  addSyncListener,
+  type Message,
 } from '../sync';
 import * as mockSyncServer from '../tests/mockSyncServer';
 import * as exceptions from '#platform/exceptions';
+
+// Configurar mocks preservando la implementación original por defecto
+vi.mock('#server/db', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#server/db')>();
+  return {
+    ...actual,
+    transaction: vi.fn(actual.transaction),
+  };
+});
+
+vi.mock('@actual-app/crdt', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@actual-app/crdt')>();
+  return {
+    ...actual,
+    merkle: {
+      ...actual.merkle,
+      insert: vi.fn(actual.merkle.insert),
+      prune: vi.fn(actual.merkle.prune),
+    },
+  };
+});
+
+vi.mock('#server/sheet', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#server/sheet')>();
+  return {
+    ...actual,
+    get: vi.fn(actual.get),
+  };
+});
+
+vi.mock('#server/budget/base', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#server/budget/base')>();
+  return {
+    ...actual,
+    triggerBudgetChanges: vi.fn(actual.triggerBudgetChanges),
+  };
+});
+
+vi.mock('#server/undo', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#server/undo')>();
+  return {
+    ...actual,
+    appendMessages: vi.fn(actual.appendMessages),
+  };
+});
+
+vi.mock('#server/prefs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#server/prefs')>();
+  return {
+    ...actual,
+    savePrefs: vi.fn(actual.savePrefs),
+    loadPrefs: vi.fn(actual.loadPrefs),
+  };
+});
+
+vi.mock('#platform/server/connection', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('#platform/server/connection')>();
+  return {
+    ...actual,
+    send: vi.fn(actual.send),
+  };
+});
+
+vi.mock('../sync', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../sync')>();
+  return {
+    ...actual,
+    syncHelpers: {
+      ...actual.syncHelpers,
+      compareMessages: vi.fn(actual.syncHelpers?.compareMessages),
+    },
+  };
+});
 
 describe('Sync Integration Tests', () => {
   let spyCaptureException;
@@ -114,5 +194,11 @@ describe('Sync Integration Tests', () => {
     expect(spyPostBinary).not.toHaveBeenCalled();
     // Se debe reportar el error en la plataforma a través de captureException (errorHandler)
     expect(spyCaptureException).toHaveBeenCalled();
+  });
+
+  describe('applyMessages', () => {
+    it('debe estar definido y expuesto correctamente', () => {
+      expect(applyMessages).toBeDefined();
+    });
   });
 });

@@ -1,9 +1,10 @@
 // @ts-strict-ignore
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { Timestamp } from '@actual-app/crdt';
+import { Timestamp, merkle } from '@actual-app/crdt';
 
 import * as post from '#server/post';
+import * as prefs from '#server/prefs';
 import * as db from '#server/db';
 import * as undo from '#server/undo';
 import * as sheet from '#server/sheet';
@@ -232,10 +233,10 @@ describe('Sync Integration Tests', () => {
       vi.mocked(merkle.prune).mockImplementation((merkleTrie) => merkleTrie);
 
       // Simular triggerBudgetChanges
-      vi.mocked(budgetBase.triggerBudgetChanges).mockImplementation(() => {});
+      vi.mocked(budgetBase.triggerBudgetChanges).mockImplementation(() => { });
 
       // Simular undo.appendMessages
-      vi.mocked(undo.appendMessages).mockImplementation(() => {});
+      vi.mocked(undo.appendMessages).mockImplementation(() => { });
 
       // Simular sheet.get
       mockSheet = {
@@ -419,7 +420,7 @@ describe('Sync Integration Tests', () => {
       };
 
       const spyListener = vi.fn();
-      
+
       // Registrar el listener
       const removeListener = addSyncListener(spyListener);
 

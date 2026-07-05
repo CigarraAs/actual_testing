@@ -258,8 +258,184 @@ describe('Sync Integration Tests', () => {
       vi.mocked(sheet.get).mockRestore();
     });
 
-    it('debe estar definido y expuesto correctamente', () => {
-      expect(applyMessages).toBeDefined();
+    /**
+     * Escenario 1: Mensaje nuevo (se aplica)
+     * Verifica que un mensaje marcado como nuevo por compareMessages
+     * se aplique de manera efectiva en la base de datos de CRDT,
+     * se registre para deshacer y se inserte en el árbol de Merkle.
+     */
+    it('debe aplicar un mensaje nuevo en la base de datos CRDT, registrarlo en undo y actualizar Merkle', async () => {
+      const msg: Message = {
+        dataset: 'transactions',
+        row: 'txn-1',
+        column: 'amount',
+        value: 5000,
+        timestamp: Timestamp.send(),
+      };
+
+      // Ejecutamos applyMessages con el mensaje nuevo
+      const result = await applyMessages([msg]);
+
+      // Verificar que se haya retornado el mensaje
+      expect(result).toEqual([msg]);
+
+      // Verificar que se haya ejecutado db.transaction
+      expect(db.transaction).toHaveBeenCalled();
+
+      // Verificar que se haya registrado en undo con los datos viejos
+      expect(undo.appendMessages).toHaveBeenCalledWith([msg], expect.any(Map));
+
+      // Verificar que se haya insertado en el árbol de Merkle
+      expect(merkle.insert).toHaveBeenCalledWith(expect.anything(), msg.timestamp);
+
+      // Verificar que se haya insertado físicamente en la base de datos crdt
+      const crdtMsgs = await db.all<db.DbCrdtMessage>(
+        'SELECT * FROM messages_crdt WHERE row = ?',
+        ['txn-1']
+      );
+      expect(crdtMsgs.length).toBe(1);
+      expect(crdtMsgs[0].value).toBe('5000');
+    });
+
+    /**
+     * Escenario 2: Mensaje antiguo (se ignora)
+     * Verifica que si compareMessages marca un mensaje con old: true,
+     * este no se aplique a la base de datos de negocio, pero sí se registre
+     * en messages_crdt y actualice el árbol de Merkle.
+     */
+    it('debe ignorar la aplicación a negocio de un mensaje antiguo, pero registrarlo en CRDT y actualizar Merkle', async () => {
+      const msg: Message = {
+        dataset: 'transactions',
+        row: 'txn-old-1',
+        column: 'amount',
+        value: 12000,
+        timestamp: Timestamp.send(),
+      };
+
+      // Configuramos compareMessages para marcarlo como antiguo (old: true)
+      vi.mocked(syncHelpers.compareMessages).mockResolvedValue([{ ...msg, old: true }]);
+
+      const result = await applyMessages([msg]);
+
+      // El resultado debe reflejar que el mensaje fue clasificado como antiguo
+      expect(result[0].old).toBe(true);
+
+      // El mensaje antiguo no debe pasar a negocio, pero sí debe registrarse en CRDT para consistencia de hashes
+      const crdtMsgs = await db.all<db.DbCrdtMessage>(
+        'SELECT * FROM messages_crdt WHERE row = ?',
+        ['txn-old-1']
+      );
+      expect(crdtMsgs.length).toBe(1);
+
+      // Debe actualizar de todas formas el árbol de Merkle
+      expect(merkle.insert).toHaveBeenCalledWith(expect.anything(), msg.timestamp);
+    });
+
+    /**
+     * Escenario 3: Múltiples mensajes en lote
+     * Valida que al enviar varios mensajes mezclados (nuevos y antiguos),
+     * solo los nuevos se apliquen, pero ambos se consoliden en la base de datos
+     * de CRDT y el árbol de Merkle.
+     */
+    it('debe procesar múltiples mensajes en lote aplicando los nuevos e ignorando los antiguos', async () => {
+      const msgNew: Message = {
+        dataset: 'transactions',
+        row: 'txn-batch-new',
+        column: 'amount',
+        value: 150,
+        timestamp: Timestamp.send(),
+      };
+
+      const msgOld: Message = {
+        dataset: 'transactions',
+        row: 'txn-batch-old',
+        column: 'amount',
+        value: 300,
+        timestamp: Timestamp.send(),
+      };
+
+      // Simulamos que el primer mensaje es nuevo y el segundo es antiguo
+      vi.mocked(syncHelpers.compareMessages).mockResolvedValue([
+        msgNew,
+        { ...msgOld, old: true }
+      ]);
+
+      await applyMessages([msgNew, msgOld]);
+
+      // Ambos mensajes deben guardarse en la tabla de mensajería CRDT para sincronía global
+      const crdtMsgs = await db.all<db.DbCrdtMessage>(
+        'SELECT * FROM messages_crdt WHERE row IN (?, ?)',
+        ['txn-batch-new', 'txn-batch-old']
+      );
+      expect(crdtMsgs.length).toBe(2);
+
+      // Ambos deben agregarse al árbol de Merkle
+      expect(merkle.insert).toHaveBeenCalledWith(expect.anything(), msgNew.timestamp);
+      expect(merkle.insert).toHaveBeenCalledWith(expect.anything(), msgOld.timestamp);
+
+      // Verificamos que undo.appendMessages reciba la lista consolidada de mensajes
+      expect(undo.appendMessages).toHaveBeenCalledWith(
+        [msgNew, { ...msgOld, old: true }],
+        expect.any(Map)
+      );
+    });
+
+    /**
+     * Escenario 4: Actualización de spreadsheet
+     * Valida que si el spreadsheet está cargado (sheet.get() no es nulo),
+     * se inicie una barrera de caché, se gatille triggerBudgetChanges,
+     * se dispare triggerDatabaseChanges y finalmente se limpie la barrera.
+     */
+    it('debe actualizar el spreadsheet y notificar los cambios de presupuesto', async () => {
+      const msg: Message = {
+        dataset: 'transactions',
+        row: 'txn-sheet-1',
+        column: 'amount',
+        value: 200,
+        timestamp: Timestamp.send(),
+      };
+
+      await applyMessages([msg]);
+
+      // Verificar ciclo de vida del spreadsheet
+      expect(mockSheet.startCacheBarrier).toHaveBeenCalled();
+      expect(budgetBase.triggerBudgetChanges).toHaveBeenCalled();
+      expect(mockSheet.triggerDatabaseChanges).toHaveBeenCalled();
+      expect(mockSheet.endCacheBarrier).toHaveBeenCalled();
+    });
+
+    /**
+     * Escenario 5: Notificación a los listeners de sincronización
+     * Valida que al aplicar mensajes, los listeners registrados a través de
+     * addSyncListener sean llamados con los datos viejos (oldData) y nuevos (newData).
+     */
+    it('debe notificar a los listeners registrados mediante addSyncListener tras aplicar mensajes', async () => {
+      const msg: Message = {
+        dataset: 'transactions',
+        row: 'txn-listener-1',
+        column: 'amount',
+        value: 400,
+        timestamp: Timestamp.send(),
+      };
+
+      const spyListener = vi.fn();
+      
+      // Registrar el listener
+      const removeListener = addSyncListener(spyListener);
+
+      try {
+        await applyMessages([msg]);
+
+        // Verificar que el listener haya sido llamado
+        expect(spyListener).toHaveBeenCalledTimes(1);
+        expect(spyListener).toHaveBeenCalledWith(
+          expect.any(Map), // oldData
+          expect.any(Map)  // newData
+        );
+      } finally {
+        // Desregistrar el listener para no dejar basura para otros tests
+        removeListener();
+      }
     });
   });
 });

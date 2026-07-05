@@ -316,4 +316,138 @@ describe('Budget Integration Tests', () => {
     expect(groceries?.amount).toBe(50000); // sin cambios
     expect(rent?.amount).toBe(80000); // sin cambios
   });
+
+  // ========================================================================
+  // F06 – holdForNextMonth
+  // ========================================================================
+
+  async function setupHoldEnv() {
+    await setupBudgetEnv();
+    await db.insertAccount({
+      id: 'checking',
+      name: 'Checking',
+      offbudget: 0,
+    });
+  }
+
+  /**
+   * INT-BUD-08: Reservar fondos para el mes siguiente con fondos suficientes
+   * (F06 holdForNextMonth).
+   * Tarea: S3-F3.2-06 — F06 holdForNextMonth
+   *
+   * Verifica que:
+   * - Al existir fondos disponibles (to-budget > 0), la función retorna true.
+   * - El buffer se actualiza en zero_budget_months con el monto reservado.
+   */
+  it('INT-BUD-08: Reservar fondos exitosamente con to-budget positivo', async () => {
+    await setupHoldEnv();
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'envelope')`,
+    );
+
+    await db.insertTransaction({
+      id: 'txn-income',
+      account: 'checking',
+      category: 'salary-cat',
+      date: '2026-06-15',
+      amount: 200000,
+    });
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'groceries-cat',
+      month: '2026-06',
+      amount: 50000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    const result = await runHandler(
+      handlers['budget/hold-for-next-month'],
+      { month: '2026-06', amount: 20000 },
+    );
+    expect(result).toBe(true);
+
+    const monthRow = await db.first<{ buffered: number }>(
+      `SELECT buffered FROM zero_budget_months WHERE id = ?`,
+      ['2026-06'],
+    );
+    expect(monthRow?.buffered).toBe(20000);
+  });
+
+  /**
+   * INT-BUD-09: Intentar reservar sin fondos disponibles (to-budget <= 0)
+   * (F06 holdForNextMonth).
+   * Tarea: S3-F3.2-06 — F06 holdForNextMonth
+   *
+   * Verifica que:
+   * - Cuando to-budget es 0 (sin ingresos y con gasto presupuestado),
+   *   la función retorna false.
+   * - El buffer no se crea en zero_budget_months.
+   */
+  it('INT-BUD-09: holdForNextMonth retorna false si to-budget es 0', async () => {
+    await setupBudgetEnv();
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'envelope')`,
+    );
+
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'groceries-cat',
+      month: '2026-06',
+      amount: 50000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    const result = await runHandler(
+      handlers['budget/hold-for-next-month'],
+      { month: '2026-06', amount: 20000 },
+    );
+    expect(result).toBe(false);
+
+    const monthRow = await db.first<{ buffered: number }>(
+      `SELECT buffered FROM zero_budget_months WHERE id = ?`,
+      ['2026-06'],
+    );
+    expect(monthRow).toBeNull();
+  });
+
+  /**
+   * INT-BUD-10: Reservar monto mayor al disponible — calcBufferedAmount
+   * trunca al to-budget máximo (F06 holdForNextMonth).
+   * Tarea: S3-F3.2-06 — F06 holdForNextMonth
+   *
+   * Verifica que:
+   * - Si se solicita reservar más de lo disponible, calcBufferedAmount
+   *   trunca el monto al to-budget.
+   * - El buffer se establece al máximo posible (to-budget = ingreso - gasto).
+   */
+  it('INT-BUD-10: Reservar monto mayor al disponible trunca al máximo', async () => {
+    await setupHoldEnv();
+    db.runQuery(
+      `INSERT INTO preferences (id, value) VALUES ('budgetType', 'envelope')`,
+    );
+
+    await db.insertTransaction({
+      id: 'txn-income',
+      account: 'checking',
+      category: 'salary-cat',
+      date: '2026-06-15',
+      amount: 100000,
+    });
+    await runHandler(handlers['budget/budget-amount'], {
+      category: 'groceries-cat',
+      month: '2026-06',
+      amount: 50000,
+    });
+    await sheet.waitOnSpreadsheet();
+
+    const result = await runHandler(
+      handlers['budget/hold-for-next-month'],
+      { month: '2026-06', amount: 100000 },
+    );
+    expect(result).toBe(true);
+
+    const monthRow = await db.first<{ buffered: number }>(
+      `SELECT buffered FROM zero_budget_months WHERE id = ?`,
+      ['2026-06'],
+    );
+    expect(monthRow?.buffered).toBe(50000);
+  });
 });

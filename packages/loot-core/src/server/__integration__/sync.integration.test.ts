@@ -196,7 +196,68 @@ describe('Sync Integration Tests', () => {
     expect(spyCaptureException).toHaveBeenCalled();
   });
 
+  /**
+   * INT-SYN-003: Pruebas de integración para applyMessages (F17).
+   * Tarea: S3-F3.2-17 — F17 applyMessages
+   *
+   * Valida la aplicación de mensajes CRDT a la base de datos local, asegurando que:
+   * - Se compare el mensaje para determinar si es nuevo u antiguo.
+   * - Los mensajes nuevos se apliquen a la base de datos y al árbol de Merkle.
+   * - Los mensajes antiguos se ignoren de la aplicación real a base de datos de negocio pero actualicen el árbol de Merkle.
+   * - Se notifique a los listeners de sincronización y se actualice el spreadsheet de ser necesario.
+   * - Todas las operaciones se ejecuten dentro de una transacción db robusta.
+   */
   describe('applyMessages', () => {
+    let mockSheet;
+
+    beforeEach(() => {
+      // Simular db.transaction para ejecutar el callback inmediatamente
+      vi.mocked(db.transaction).mockImplementation((cb) => {
+        if (typeof cb === 'function') {
+          return cb();
+        }
+        return null;
+      });
+
+      // Simular compareMessages para que devuelva los mensajes sin cambios por defecto
+      vi.mocked(syncHelpers.compareMessages).mockImplementation(async (messages) => messages);
+
+      // Simular merkle.insert y merkle.prune
+      vi.mocked(merkle.insert).mockImplementation((merkleTrie, timestamp) => {
+        return {
+          ...(merkleTrie || {}),
+          [timestamp.toString()]: true,
+        };
+      });
+      vi.mocked(merkle.prune).mockImplementation((merkleTrie) => merkleTrie);
+
+      // Simular triggerBudgetChanges
+      vi.mocked(budgetBase.triggerBudgetChanges).mockImplementation(() => {});
+
+      // Simular undo.appendMessages
+      vi.mocked(undo.appendMessages).mockImplementation(() => {});
+
+      // Simular sheet.get
+      mockSheet = {
+        startCacheBarrier: vi.fn(),
+        endCacheBarrier: vi.fn(),
+        triggerDatabaseChanges: vi.fn(),
+        recompute: vi.fn(),
+        hasCell: vi.fn().mockReturnValue(true),
+      };
+      vi.mocked(sheet.get).mockReturnValue(mockSheet as any);
+    });
+
+    afterEach(() => {
+      vi.mocked(db.transaction).mockRestore();
+      vi.mocked(syncHelpers.compareMessages).mockRestore();
+      vi.mocked(merkle.insert).mockRestore();
+      vi.mocked(merkle.prune).mockRestore();
+      vi.mocked(budgetBase.triggerBudgetChanges).mockRestore();
+      vi.mocked(undo.appendMessages).mockRestore();
+      vi.mocked(sheet.get).mockRestore();
+    });
+
     it('debe estar definido y expuesto correctamente', () => {
       expect(applyMessages).toBeDefined();
     });

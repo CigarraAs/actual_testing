@@ -22,7 +22,7 @@ import {
 import * as mockSyncServer from '../tests/mockSyncServer';
 import * as exceptions from '#platform/exceptions';
 
-// describe('Sync Integration Tests', () => {
+describe('Sync Integration Tests', () => {
   let spyCaptureException;
 
   beforeEach(async () => {

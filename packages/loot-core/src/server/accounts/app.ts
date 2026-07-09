@@ -1417,7 +1417,7 @@ export type ImportTransactionsResult = bankSync.ReconcileTransactionsResult & {
   }>;
 };
 
-async function importTransactions({
+export async function importTransactions({
   accountId,
   transactions,
   isPreview,

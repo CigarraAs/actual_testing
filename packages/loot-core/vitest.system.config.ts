@@ -10,6 +10,22 @@ export default defineConfig({
     testTimeout: 300000,
     hookTimeout: 120000,
     maxWorkers: 1,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary'],
+      reportsDirectory: './coverage/system',
+      include: [
+        'src/server/db/**/*.ts',
+        'src/server/budget/**/*.ts',
+        'src/platform/server/sqlite/**/*.ts',
+      ],
+      thresholds: {
+        statements: 30,
+        branches: 25,
+        functions: 25,
+        lines: 30,
+      },
+    },
   },
   ssr: {
     resolve: { conditions: ['electron', 'module', 'node', 'development'] },

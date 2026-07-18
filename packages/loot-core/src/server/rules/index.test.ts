@@ -1,4 +1,6 @@
 // @ts-strict-ignore
+import { logger } from '#platform/server/log';
+
 import {
   Action,
   Condition,
@@ -523,6 +525,172 @@ describe('Action', () => {
       action.exec(item);
       expect(spy).toHaveBeenCalledWith('Sarah');
       spy.mockRestore();
+    });
+
+    test('`prepend-notes` prepends text to notes', () => {
+      // Test when notes is empty
+      let action = new Action('prepend-notes', 'notes', 'Prefix: ', null);
+      let item = { notes: '' };
+      action.exec(item);
+      expect(item.notes).toBe('Prefix: ');
+
+      // Test when notes is not empty
+      action = new Action('prepend-notes', 'notes', 'Prefix: ', null);
+      item = { notes: 'hello' };
+      action.exec(item);
+      expect(item.notes).toBe('Prefix: hello');
+    });
+
+    test('`append-notes` appends text to notes', () => {
+      // Test when notes is empty
+      let action = new Action('append-notes', 'notes', ' :Suffix', null);
+      let item = { notes: '' };
+      action.exec(item);
+      expect(item.notes).toBe(' :Suffix');
+
+      // Test when notes is not empty
+      action = new Action('append-notes', 'notes', ' :Suffix', null);
+      item = { notes: 'hello' };
+      action.exec(item);
+      expect(item.notes).toBe('hello :Suffix');
+    });
+
+    test('`delete-transaction` marks transaction as tombstone', () => {
+      const action = new Action('delete-transaction', null, null, null);
+      const item = {};
+      action.exec(item);
+      expect(item.tombstone).toBe(1);
+    });
+
+    test('`link-schedule` sets schedule ID', () => {
+      const action = new Action('link-schedule', null, 'schedule-uuid-123', null);
+      const item = {};
+      action.exec(item);
+      expect(item.schedule).toBe('schedule-uuid-123');
+    });
+
+    test('Handlebars template: defaults to 0 when number templates return NaN', () => {
+      const action = new Action('set', 'amount', '', {
+        template: 'not-a-number',
+      });
+      const item = { amount: 100 };
+      action.exec(item);
+      expect(item.amount).toBe(0);
+    });
+
+    test('Handlebars template: parses date templates correctly', () => {
+      // Valid date template
+      let action = new Action('set', 'date', '', {
+        template: '2024-05-15',
+      });
+      let item = { date: '' };
+      action.exec(item);
+      expect(item.date).toBe('2024-05-15');
+
+      // Invalid date template defaults to 9999-12-31 and logs error
+      const spy = vi.spyOn(logger, 'error').mockImplementation(() => null);
+      action = new Action('set', 'date', '', {
+        template: 'invalid-date-string',
+      });
+      item = { date: '' };
+      action.exec(item);
+      expect(item.date).toBe('9999-12-31');
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    test('Handlebars template: parses boolean templates correctly', () => {
+      let action = new Action('set', 'cleared', '', {
+        template: 'true',
+      });
+      let item = { cleared: false };
+      action.exec(item);
+      expect(item.cleared).toBe(true);
+
+      action = new Action('set', 'cleared', '', {
+        template: 'false',
+      });
+      item = { cleared: true };
+      action.exec(item);
+      expect(item.cleared).toBe(false);
+    });
+
+    test('Formula set date: parses date format from formula correctly', () => {
+      // Valid date formula
+      let action = new Action('set', 'date', null, {
+        formula: '="2024-06-20"',
+      });
+      let item = { date: '', _ruleErrors: [] };
+      action.exec(item);
+      expect(item.date).toBe('2024-06-20');
+      expect(item._ruleErrors).toEqual([]);
+
+      // Invalid date formula should log errors
+      action = new Action('set', 'date', null, {
+        formula: '="invalid-date"',
+      });
+      item = { date: '2024-01-01', _ruleErrors: [] };
+      action.exec(item);
+      expect(item.date).toBe('2024-01-01'); // remains unchanged
+      expect(item._ruleErrors.length).toBe(1);
+      expect(item._ruleErrors[0]).toContain('Formula for "date" must produce a valid date');
+    });
+
+    test('Formula set boolean: parses boolean values correctly', () => {
+      // Boolean literal
+      let action = new Action('set', 'cleared', null, {
+        formula: '=TRUE()',
+      });
+      let item = { cleared: false, _ruleErrors: [] };
+      action.exec(item);
+      expect(item.cleared).toBe(true);
+
+      // String representation
+      action = new Action('set', 'cleared', null, {
+        formula: '="false"',
+      });
+      item = { cleared: true, _ruleErrors: [] };
+      action.exec(item);
+      expect(item.cleared).toBe(false);
+    });
+
+    test('Formula set number: checks error branch on NaN result', () => {
+      const action = new Action('set', 'amount', null, {
+        formula: '="not-a-number"',
+      });
+      const item = { amount: 50, _ruleErrors: [] };
+      action.exec(item);
+      expect(item.amount).toBe(50); // remains unchanged
+      expect(item._ruleErrors.length).toBe(1);
+      expect(item._ruleErrors[0]).toContain('Formula for "amount" must produce a numeric value');
+    });
+
+    test('Formula set split-amount: validates split formula errors and invalid output', () => {
+      // Missing formula error
+      let action = new Action('set-split-amount', null, null, {
+        method: 'formula',
+      });
+      let item = { amount: 100, _ruleErrors: [] };
+      action.exec(item);
+      expect(item._ruleErrors[0]).toContain('Formula method selected but no formula specified');
+
+      // Formula producing NaN error
+      action = new Action('set-split-amount', null, null, {
+        method: 'formula',
+        formula: '="not-a-number"',
+      });
+      item = { amount: 100, _ruleErrors: [] };
+      action.exec(item);
+      expect(item._ruleErrors[0]).toContain('Formula for split amount must produce a numeric value');
+
+      // Formula throwing error
+      action = new Action('set-split-amount', null, null, {
+        method: 'formula',
+        formula: '=INVALID_FN()',
+      });
+      item = { amount: 100, _ruleErrors: [] };
+      action.exec(item);
+      expect(item._ruleErrors[0]).toContain('Error executing formula for split amount');
     });
   });
 });

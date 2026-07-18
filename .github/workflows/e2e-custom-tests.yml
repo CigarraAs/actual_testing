@@ -1,0 +1,77 @@
+name: CI - E2E Custom Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  E2E_USE_BUILD: '1'
+
+permissions:
+  contents: read
+
+jobs:
+  build-web:
+    name: Build web bundle
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-jammy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up environment
+        uses: ./.github/actions/setup
+        with:
+          download-translations: 'false'
+      - name: Trust the repository directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build browser bundle
+        env:
+          REACT_APP_NETLIFY: 'true'
+        run: yarn build:browser --skip-translations
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-client-build-custom
+          path: packages/desktop-client/build/
+          retention-days: 1
+          overwrite: true
+
+  run-e2e:
+    name: Run E2E Custom Tests
+    runs-on: ubuntu-latest
+    needs: build-web
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-jammy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up environment
+        uses: ./.github/actions/setup
+        with:
+          download-translations: 'false'
+      - name: Trust the repository directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-client-build-custom
+          path: packages/desktop-client/build/
+      - name: Run E2E Custom Tests
+        run: |
+          yarn playwright test \
+            packages/desktop-client/e2e/budget-overspending.test.ts \
+            packages/desktop-client/e2e/rules-renaming.test.ts \
+            packages/desktop-client/e2e/budget-rollover.test.ts \
+            packages/desktop-client/e2e/account-closing.test.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: desktop-client-test-results-custom
+          path: packages/desktop-client/test-results/
+          retention-days: 7
+          overwrite: true

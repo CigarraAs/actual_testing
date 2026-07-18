@@ -134,4 +134,52 @@ export class BudgetPage {
 
     await this.page.getByRole('button', { name: 'Transfer' }).click();
   }
+
+  async getRowIndexForCategory(categoryName: string): Promise<number> {
+    // Wait for the category name to appear in the table first (handles async rendering)
+    const categoryNameLocator = this.budgetTable
+      .getByTestId('category-name')
+      .filter({ hasText: categoryName });
+    await categoryNameLocator.first().waitFor({ state: 'visible', timeout: 10000 });
+
+    const rows = this.budgetTable.getByTestId('row');
+    const count = await rows.count();
+    for (let i = 0; i < count; i++) {
+      const row = rows.nth(i);
+      const nameLocator = row.getByTestId('category-name');
+      // Skip rows that don't have a category-name element (like headers or group titles)
+      if (await nameLocator.count() > 0) {
+        const nameText = await nameLocator.textContent();
+        if (nameText?.trim() === categoryName) {
+          return i;
+        }
+      }
+    }
+    throw new Error(`Category "${categoryName}" not found in the budget table.`);
+  }
+
+  async coverOverspendingForRow(idx: number, fromCategoryName: string) {
+    // Click on the balance cell of the overspent category row
+    await this.budgetTable
+      .getByTestId('row')
+      .nth(idx)
+      .getByTestId('balance')
+      .getByTestId(/^budget/)
+      .click();
+
+    // Click "Cover overspending" in the context menu
+    await this.page
+      .getByRole('button', { name: 'Cover overspending' })
+      .click();
+
+    // Click the autocomplete target input
+    await this.page.getByPlaceholder('(none)').click();
+
+    // Type the source category name and select it
+    await this.page.keyboard.type(fromCategoryName);
+    await this.page.keyboard.press('Enter');
+
+    // Click "Transfer"
+    await this.page.getByRole('button', { name: 'Transfer' }).click();
+  }
 }

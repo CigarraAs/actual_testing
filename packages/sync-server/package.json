@@ -85,7 +85,8 @@
     "db:test-downgrade": "yarn build && cross-env NODE_ENV=test node build/scripts/run-migrations.js down",
     "reset-password": "yarn build && node build/scripts/reset-password.js",
     "disable-openid": "yarn build && node build/scripts/disable-openid.js",
-    "health-check": "yarn build && node build/scripts/health-check.js"
+    "health-check": "yarn build && node build/scripts/health-check.js",
+    "test:contract": "npx newman run postman/contract.collection.json -e postman/ci.postman_environment.json --reporters junit --reporter-junit-export newman-report.xml"
   },
   "dependencies": {
     "@actual-app/crdt": "workspace:*",
@@ -119,6 +120,7 @@
     "@types/supertest": "^7.2.0",
     "@typescript/native-preview": "beta",
     "http-proxy-middleware": "^3.0.5",
+    "newman": "^6.2.2",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2",
     "typescript-strict-plugin": "^2.4.4",

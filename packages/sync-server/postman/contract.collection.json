@@ -1,0 +1,93 @@
+{
+  "info": {
+    "name": "Actual Budget Sync Server - Contract Tests",
+    "description": "Pruebas de contrato para los endpoints REST del sync-server",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /info",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has build version', function () {",
+              "  var jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.have.property('build');",
+              "  pm.expect(jsonData.build).to.have.property('version');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/info",
+          "host": ["{{BASE_URL}}"],
+          "path": ["info"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST /sync/user-get-key (sin autenticación - debe fallar)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('Response has status error', function () {",
+              "  var jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.have.property('status', 'error');",
+              "});",
+              "",
+              "pm.test('Response has reason unauthorized', function () {",
+              "  var jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.have.property('reason', 'unauthorized');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"password\": \"wrong\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/sync/user-get-key",
+          "host": ["{{BASE_URL}}"],
+          "path": ["sync", "user-get-key"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5006",
+      "type": "string"
+    }
+  ]
+}

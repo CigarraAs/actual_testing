@@ -1,0 +1,41 @@
+name: Contract Tests (Postman)
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'packages/sync-server/**'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - run: yarn install --immutable
+      - run: npm install -g newman
+      - name: Start sync-server
+        run: |
+          yarn workspace @actual-app/sync-server start &
+          npx wait-on http://localhost:5006 --timeout 10000
+      - name: Run contract tests
+        run: |
+          cd packages/sync-server
+          newman run postman/contract.collection.json \
+            -e postman/ci.postman_environment.json \
+            --reporters junit \
+            --reporter-junit-export newman-report.xml
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: packages/sync-server/newman-report.xml
+      - name: Stop server
+        if: always()
+        run: pkill -f "node.*sync-server" || true

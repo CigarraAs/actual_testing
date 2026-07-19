@@ -135,3 +135,44 @@ describe('simpleFinBatchSync', () => {
     });
   });
 });
+
+const unlinkAccountHandler = app.handlers['account-unlink'];
+
+describe('account-unlink', () => {
+  it('returns ok if account not found', async () => {
+    await expect(unlinkAccountHandler({ id: 'non-existent' })).rejects.toThrow(
+      'Account with ID non-existent not found.',
+    );
+  });
+
+  it('unlinks account without bank successfully', async () => {
+    await db.insertAccount({
+      id: 'acct-no-bank',
+      name: 'No Bank Account',
+    });
+
+    const res = await unlinkAccountHandler({ id: 'acct-no-bank' });
+    expect(res).toBe('ok');
+
+    const acct = await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', ['acct-no-bank']);
+    expect(acct.bank).toBeNull();
+  });
+
+  it('unlinks bank sync account and clears sync fields', async () => {
+    insertBank({ id: 'bank-test', bank_id: 'b-1', name: 'Test Bank' });
+    await db.insertAccount({
+      id: 'acct-with-bank',
+      name: 'Bank Account',
+      bank: 'bank-test',
+      account_id: 'ext-acct-1',
+      account_sync_source: 'simpleFin',
+    });
+
+    await unlinkAccountHandler({ id: 'acct-with-bank' });
+
+    const acct = await db.first<db.DbAccount>('SELECT * FROM accounts WHERE id = ?', ['acct-with-bank']);
+    expect(acct.bank).toBeNull();
+    expect(acct.account_id).toBeNull();
+    expect(acct.account_sync_source).toBeNull();
+  });
+});

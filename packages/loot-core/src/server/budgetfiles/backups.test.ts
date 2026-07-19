@@ -1,7 +1,16 @@
 // @ts-strict-ignore
 import * as dateFns from 'date-fns';
 
-import { updateBackups } from './backups';
+vi.mock('#platform/server/fs', () => ({
+  exists: vi.fn(),
+  listDir: vi.fn(),
+  getModifiedTime: vi.fn(),
+  join: vi.fn((...args: string[]) => args.join('/')),
+  getBudgetDir: vi.fn((id) => `/budgets/${id}`),
+}));
+
+import * as mockFs from '#platform/server/fs';
+import { updateBackups, getAvailableBackups, startBackupService, stopBackupService } from './backups';
 
 describe('Backups', () => {
   test('backups work', async () => {
@@ -75,5 +84,57 @@ describe('Backups', () => {
         ]),
       ),
     ).toMatchSnapshot();
+  });
+});
+
+describe('Backup Service & API', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    stopBackupService();
+  });
+
+  test('getAvailableBackups with zip list and latest backup', async () => {
+    vi.mocked(mockFs.exists).mockResolvedValue(true);
+    vi.mocked(mockFs.listDir).mockResolvedValue([
+      '2024-05-10_10-00-00.zip',
+      '2024-05-11_12-00-00.zip',
+      'not-a-zip.txt',
+    ]);
+    vi.mocked(mockFs.getModifiedTime).mockImplementation(async (path) => {
+      if (path.includes('2024-05-10')) {
+        return new Date('2024-05-10T10:00:00Z').getTime();
+      }
+      return new Date('2024-05-11T12:00:00Z').getTime();
+    });
+
+    const backups = await getAvailableBackups('budget-1');
+    
+    // Should find the latest backup sqlite file and zip files, sorted descending
+    expect(backups.length).toBe(3); // db.latest.sqlite + 2 zip files
+    expect(backups[0].id).toBe('db.latest.sqlite');
+    expect(backups[0].date).toBeNull();
+    expect(backups[0]).toHaveProperty('isLatest', true);
+
+    expect(backups[1].id).toBe('2024-05-11_12-00-00.zip');
+    expect(backups[2].id).toBe('2024-05-10_10-00-00.zip');
+  });
+
+  test('backup service start and stop', () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => null);
+
+    startBackupService('budget-1');
+    // Fast-forward time by 15 minutes
+    vi.advanceTimersByTime(1000 * 60 * 15);
+    
+    expect(spy).toHaveBeenCalledWith('Making backup');
+
+    stopBackupService();
+    vi.advanceTimersByTime(1000 * 60 * 15);
+    // Should not trigger again after stopping
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    spy.mockRestore();
+    vi.useRealTimers();
   });
 });

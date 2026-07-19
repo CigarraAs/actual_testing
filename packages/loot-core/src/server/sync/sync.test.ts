@@ -10,6 +10,7 @@ import * as encoder from './encoder';
 import { isError } from './utils';
 
 import { applyMessages, fullSync, sendMessages, setSyncingMode } from './index';
+import { repairSync } from './repair';
 
 beforeEach(() => {
   mockSyncServer.reset();
@@ -345,5 +346,38 @@ describe('Sync projections', () => {
 
     // Apply the messages that deletes it
     await applyMessages(secondMessages);
+  });
+
+  test('repairSync rebuilds the merkle hash and updates the clock in database', async () => {
+    void prefs.loadPrefs();
+    void prefs.savePrefs({ groupId: 'group' });
+
+    // Send a message so we have a crdt message in messages_crdt
+    const timestamp = Timestamp.send();
+    await sendMessages([
+      {
+        dataset: 'transactions',
+        row: 'foo',
+        column: 'amount',
+        value: 3200,
+        timestamp,
+      },
+    ]);
+
+    // Check that we have a clock and merkle tree
+    const originalClock = getClock();
+    expect(originalClock.merkle).not.toBeNull();
+
+    // Now corrupt the local clock in memory/db or just call repairSync to rebuild
+    // repairSync should rebuild from scratch using the database messages
+    await repairSync();
+
+    // Check that rebuilt clock is valid and matches
+    const newClock = getClock();
+    expect(newClock.merkle).toEqual(originalClock.merkle);
+
+    // Verify database messages_clock table has the serialized clock
+    const clockRows = await db.all<db.DbClockMessage>('SELECT * FROM messages_clock');
+    expect(clockRows.length).toBe(1);
   });
 });

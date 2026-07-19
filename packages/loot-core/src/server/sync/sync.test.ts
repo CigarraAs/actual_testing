@@ -9,7 +9,7 @@ import * as mockSyncServer from '#server/tests/mockSyncServer';
 import * as encoder from './encoder';
 import { isError } from './utils';
 
-import { applyMessages, fullSync, sendMessages, setSyncingMode } from './index';
+import { applyMessages, fullSync, sendMessages, setSyncingMode, batchMessages } from './index';
 import { repairSync } from './repair';
 
 beforeEach(() => {
@@ -379,5 +379,21 @@ describe('Sync projections', () => {
     // Verify database messages_clock table has the serialized clock
     const clockRows = await db.all<db.DbClockMessage>('SELECT * FROM messages_clock');
     expect(clockRows.length).toBe(1);
+  });
+
+  test('setSyncingMode invalid mode throws error', () => {
+    expect(() => setSyncingMode('invalid_mode' as any)).toThrow(
+      'setSyncingMode: invalid mode: invalid_mode',
+    );
+  });
+
+  test('batchMessages supports nested batching', async () => {
+    let nestedCalled = false;
+    await batchMessages(async () => {
+      await batchMessages(async () => {
+        nestedCalled = true;
+      });
+    });
+    expect(nestedCalled).toBe(true);
   });
 });

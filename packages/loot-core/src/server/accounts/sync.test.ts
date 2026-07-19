@@ -3,6 +3,7 @@ import * as asyncStorage from '#platform/server/asyncStorage';
 import * as db from '#server/db';
 import { loadMappings } from '#server/db/mappings';
 import { post } from '#server/post';
+import * as postModule from '#server/post';
 import { getServer } from '#server/server-config';
 import { handlers } from '#server/tests/mockSyncServer';
 import { insertRule, loadRules } from '#server/transactions/transaction-rules';
@@ -13,6 +14,7 @@ import {
   addTransactions,
   reconcileTransactions,
   simpleFinBatchSync,
+  syncAccount,
 } from './sync';
 
 vi.mock('#shared/months', async () => ({
@@ -757,5 +759,258 @@ describe('SimpleFin batch sync', () => {
     expect(missingResult).toBeDefined();
     expect(missingResult.res.error_code).toBe('ACCOUNT_MISSING');
     expect(missingResult.res.error_type).toBe('ACCOUNT_MISSING');
+  });
+});
+
+describe('syncAccount', () => {
+  // Test case 1: Unknown sync source throws Unrecognized bank-sync provider error
+  test('throws error for unrecognized provider', async () => {
+    const { id } = await prepareDatabase();
+    await db.update('accounts', { id, account_sync_source: 'unknown_provider' });
+
+    await expect(
+      syncAccount('user-1', 'key-1', id, 'ext-1', 'bank-1'),
+    ).rejects.toThrow('Unrecognized bank-sync provider: unknown_provider');
+  });
+});
+
+describe('additional validations and reconcile options', () => {
+  test('addTransactions throws error if date is missing', async () => {
+    const { id: acctId } = await prepareDatabase();
+    const transactions = [
+      {
+        payee_name: 'BAKKerij',
+        amount: -2947,
+      },
+    ];
+    await expect(addTransactions(acctId, transactions as any)).rejects.toThrow(
+      '`date` is required when adding a transaction',
+    );
+  });
+
+  test('addTransactions throws error if amount is not an integer', async () => {
+    const { id: acctId } = await prepareDatabase();
+    const transactions = [
+      {
+        date: '2017-10-17',
+        payee_name: 'BAKKerij',
+        amount: -29.47,
+      },
+    ];
+    await expect(addTransactions(acctId, transactions as any)).rejects.toThrow(
+      'Amount is invalid, must be an integer: -29.47',
+    );
+  });
+
+  test('addTransactions throws error if subtransaction amount is not an integer', async () => {
+    const { id: acctId } = await prepareDatabase();
+    const transactions = [
+      {
+        date: '2017-10-17',
+        payee_name: 'BAKKerij',
+        amount: -2947,
+        subtransactions: [
+          {
+            amount: -10.5,
+          },
+        ],
+      },
+    ];
+    await expect(addTransactions(acctId, transactions as any)).rejects.toThrow(
+      'Subtransaction amount is invalid, must be an integer: -10.5',
+    );
+  });
+
+  test('reconcileTransactions throws error if payeeName is missing in bank sync', async () => {
+    const { id: acctId } = await prepareDatabase();
+    const transactions = [
+      {
+        booked: true,
+        date: '2024-04-05',
+        transactionAmount: { amount: '-10.50' },
+      },
+    ];
+    await expect(
+      reconcileTransactions(acctId, transactions as any, true),
+    ).rejects.toThrow('`payeeName` is required when adding a transaction');
+  });
+
+  test('reconcileTransactions handles custom sync mappings and pending/notes preferences', async () => {
+    const { id: acctId } = await prepareDatabase();
+
+    // Save preferences
+    await db.runQuery('INSERT OR REPLACE INTO preferences (id, value) VALUES (?, ?)', [
+      `custom-sync-mappings-${acctId}`,
+      JSON.stringify({
+        payment: { date: 'date', payee: 'payeeName', amount: 'amount' },
+        deposit: { date: 'date', payee: 'payeeName', amount: 'amount' },
+      }),
+    ]);
+    await db.runQuery('INSERT OR REPLACE INTO preferences (id, value) VALUES (?, ?)', [
+      `sync-import-pending-${acctId}`,
+      'false',
+    ]);
+    await db.runQuery('INSERT OR REPLACE INTO preferences (id, value) VALUES (?, ?)', [
+      `sync-import-notes-${acctId}`,
+      'false',
+    ]);
+
+    const transactions = [
+      {
+        booked: true,
+        date: '2024-04-05',
+        payeeName: 'Test Payee 1',
+        transactionAmount: { amount: '-10.50' },
+        notes: 'Notes that should not be imported',
+      },
+      {
+        booked: false, // pending transaction, should be skipped because sync-import-pending is false
+        date: '2024-04-06',
+        payeeName: 'Test Payee 2',
+        transactionAmount: { amount: '-20.00' },
+      }
+    ];
+
+    const result = await reconcileTransactions(
+      acctId,
+      transactions as any,
+      true, // isBankSync
+    );
+
+    expect(result.added.length).toBe(1); // Only the booked one
+    const all = await getAllTransactions();
+    // Notes should be blank because sync-import-notes is false
+    expect(all[0].notes).toBeNull();
+  });
+
+  test('reconcileTransactions supports isPreview mode without database side-effects', async () => {
+    const { id: acctId } = await prepareDatabase();
+
+    const existingTx = {
+      imported_id: 'tx-1',
+      date: '2024-04-05',
+      payee_name: 'Test Payee',
+      amount: -1500,
+    };
+    await reconcileTransactions(acctId, [existingTx]);
+
+    const result = await reconcileTransactions(
+      acctId,
+      [
+        {
+          imported_id: 'tx-1',
+          date: '2024-04-05',
+          payee_name: 'Test Payee',
+          amount: -1500,
+          notes: 'New note in preview',
+        },
+      ],
+      false, // isBankSyncAccount
+      true, // strictIdChecking
+      true, // isPreview = true
+    );
+
+    expect(result.added.length).toBe(0); 
+    expect(result.updatedPreview.length).toBe(1); // Included in preview
+    expect(result.updatedPreview[0].transaction.notes).toBe('New note in preview');
+
+    const all = await getAllTransactions();
+    expect(all[0].notes).toBeNull(); // Database notes remain unchanged
+  });
+
+  test('reconcileTransactions updates dates of existing transaction if updateDates is true', async () => {
+    const { id: acctId } = await prepareDatabase();
+
+    const initialTx = {
+      imported_id: 'tx-1',
+      date: '2024-04-05',
+      payee_name: 'Test Payee',
+      amount: -1500,
+    };
+
+    // Add first time
+    await reconcileTransactions(acctId, [initialTx]);
+
+    const all1 = await getAllTransactions();
+    expect(all1[0].date).toBe(20240405);
+
+    // Import again with different date and updateDates = true
+    const updatedTx = {
+      imported_id: 'tx-1',
+      date: '2024-04-07',
+      payee_name: 'Test Payee',
+      amount: -1500,
+    };
+    const result = await reconcileTransactions(
+      acctId,
+      [updatedTx],
+      false, // isBankSyncAccount
+      true, // strictIdChecking
+      false, // isPreview
+      true, // defaultCleared
+      true, // updateDates = true
+    );
+
+    expect(result.updated.length).toBe(1);
+
+    const all2 = await getAllTransactions();
+    expect(all2[0].date).toBe(20240407); // Date has been updated!
+  });
+
+  test('addTransactions without running transfers and learning categories', async () => {
+    const { id: acctId } = await prepareDatabase();
+    const transactions = [
+      {
+        date: '2017-10-17',
+        payee_name: 'BAKKerij',
+        amount: -2947,
+      },
+    ];
+    const added = await addTransactions(acctId, transactions, false, false);
+    expect(added.length).toBe(1);
+  });
+
+  test('reconcileTransactions updates child transactions when parent cleared status changes', async () => {
+    const { id: acctId } = await prepareDatabase();
+
+    const parentTx = {
+      imported_id: 'tx-parent',
+      date: '2024-04-05',
+      payee_name: 'Parent Payee',
+      amount: -3000,
+      cleared: false,
+      subtransactions: [
+        {
+          amount: -1000,
+          cleared: false,
+        },
+        {
+          amount: -2000,
+          cleared: false,
+        },
+      ],
+    };
+
+    // Reconcile/insert parent with subtransactions
+    await reconcileTransactions(acctId, [parentTx]);
+
+    const all1 = await getAllTransactions();
+    expect(all1.length).toBe(3); // 1 parent + 2 children
+    expect(all1.every(t => !t.cleared)).toBe(true);
+
+    // Import again with cleared = true
+    const updatedParent = {
+      imported_id: 'tx-parent',
+      date: '2024-04-05',
+      payee_name: 'Parent Payee',
+      amount: -3000,
+      cleared: true,
+    };
+
+    const result = await reconcileTransactions(acctId, [updatedParent]);
+    expect(result.updated.length).toBe(3); // Parent + 2 children should be updated!
+
+    const all2 = await getAllTransactions();
+    expect(all2.every(t => t.cleared)).toBe(true); // All are cleared now!
   });
 });

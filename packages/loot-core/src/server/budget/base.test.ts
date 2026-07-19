@@ -3,7 +3,7 @@ import * as sheet from '#server/sheet';
 // @ts-strict-ignore
 import * as monthUtils from '#shared/months';
 
-import { createAllBudgets } from './base';
+import { createAllBudgets, setType } from './base';
 
 beforeEach(() => {
   return global.emptyDatabase()();
@@ -336,5 +336,24 @@ describe('Base budget', () => {
 
     // Verify total spent includes both visible and hidden group amounts
     expect(sheet.getCellValue(sheetName, 'total-spent')).toBe(-3000);
+  });
+
+  it('setType changes budget type and recomputes the spreadsheet', async () => {
+    await db.insertCategoryGroup({ id: 'group1', name: 'group1' });
+    await db.insertCategoryGroup({
+      id: 'group2',
+      name: 'income',
+      is_income: 1,
+    });
+    await sheet.loadSpreadsheet(db);
+    expect(sheet.get().meta().budgetType).toBe('envelope'); // defaults to envelope
+
+    await setType('tracking');
+    await sheet.waitOnSpreadsheet();
+    expect(sheet.get().meta().budgetType).toBe('tracking');
+
+    await setType('envelope');
+    await sheet.waitOnSpreadsheet();
+    expect(sheet.get().meta().budgetType).toBe('envelope');
   });
 });

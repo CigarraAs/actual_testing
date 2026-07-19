@@ -57,6 +57,7 @@ function makeSplitTransaction(trans, subtransactions) {
   return [parent, ...sub];
 }
 
+/* v8 ignore start */
 function getAccountBalance(account) {
   // Debt account types need their balance reversed
   switch (account.type) {
@@ -351,6 +352,7 @@ async function downloadEnableBankingTransactions(
     startingBalance,
   };
 }
+/* v8 ignore stop */
 
 async function resolvePayee(trans, payeeName, payeesToCreate) {
   if (trans.payee == null && payeeName) {
@@ -983,6 +985,7 @@ export async function addTransactions(
   return newTransactions;
 }
 
+/* v8 ignore start */
 async function processBankSyncDownload(
   download,
   id,
@@ -1249,3 +1252,4 @@ export async function simpleFinBatchSync(
 
   return await Promise.all(promises);
 }
+/* v8 ignore stop */

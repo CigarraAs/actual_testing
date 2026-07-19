@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for sync/make-test-message.ts</title>
+    <title>Code coverage report for budget/util.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">sync</a> make-test-message.ts</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">budget</a> util.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -85,49 +85,58 @@
 <a name='L20'></a><a href='#L20'>20</a>
 <a name='L21'></a><a href='#L21'>21</a>
 <a name='L22'></a><a href='#L22'>22</a>
-<a name='L23'></a><a href='#L23'>23</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4189x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5254x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// @ts-strict-ignore
-import { create, MessageSchema, toBinary } from '@actual-app/crdt';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">631x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">827x</span>
+<span class="cline-any cline-yes">827x</span>
+<span class="cline-any cline-yes">1157x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">827x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { number } from '#server/spreadsheet/globals';
+// @ts-strict-ignore
+import { safeNumber } from '#shared/util';
 &nbsp;
-import * as encryption from '#server/encryption';
+export { number } from '#server/spreadsheet/globals';
 &nbsp;
-function <span class="fstat-no" title="function not covered" >randomString() {</span>
-<span class="cstat-no" title="statement not covered" >  return encryption.randomBytes(12).toString();</span>
+export function sumAmounts(...amounts) {
+  return safeNumber(
+    amounts.reduce((total, amount) =&gt; {
+      return total + number(amount);
+    }, 0),
+  );
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >makeTestMessage(k</span>eyId) {
-  const <span class="cstat-no" title="statement not covered" >binaryMsg = toBinary(</span>
-    MessageSchema,
-    create(MessageSchema, {
-      dataset: randomString(),
-      row: randomString(),
-      column: randomString(),
-      value: randomString(),
-    }),
-  );
+export function flatten2(arr) {
+  return Array.prototype.concat.apply([], arr);
+}
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return await encryption.encrypt(binaryMsg, keyId);</span>
+export function unflatten2(arr) {
+  const res = [];
+  for (let i = 0; i &lt; arr.length; i += 2) {
+    res.push([arr[i], arr[i + 1]]);
+  }
+  return res;
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -136,7 +145,7 @@ export async function <span class="fstat-no" title="function not covered" >makeT
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-19T03:03:56.021Z
+                at 2026-07-19T06:45:52.202Z
             </div>
         <script src="../prettify.js"></script>
         <script>

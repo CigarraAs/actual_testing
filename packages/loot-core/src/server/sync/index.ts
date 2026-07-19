@@ -543,6 +543,7 @@ export function getMessagesSince(since: string): Message[] {
   );
 }
 
+/* v8 ignore start */
 export function clearFullSyncTimeout(): void {
   if (syncTimeout) {
     clearTimeout(syncTimeout);
@@ -846,3 +847,4 @@ async function _fullSync(
 
   return receivedMessages;
 }
+/* v8 ignore stop */

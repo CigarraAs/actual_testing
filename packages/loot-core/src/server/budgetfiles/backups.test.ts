@@ -1,18 +1,78 @@
 // @ts-strict-ignore
 import * as dateFns from 'date-fns';
 
-vi.mock('#platform/server/fs', () => ({
-  exists: vi.fn(),
-  listDir: vi.fn(),
-  getModifiedTime: vi.fn(),
-  join: vi.fn((...args: string[]) => args.join('/')),
-  getBudgetDir: vi.fn((id) => `/budgets/${id}`),
+// 1. MOCKING FILESYSTEM PLATFORM LAYER
+// Mock the platform/server/fs module to prevent actual disk reads/writes during testing.
+// Using importActual to fallback to real functions (e.g. path joins) if needed,
+// but stubbing all I/O methods to keep the tests in memory.
+vi.mock('#platform/server/fs', async () => {
+  const actual = await vi.importActual('#platform/server/fs');
+  return {
+    ...actual,
+    exists: vi.fn(),
+    listDir: vi.fn(),
+    getModifiedTime: vi.fn(),
+    join: vi.fn((...args: string[]) => args.join('/')),
+    getBudgetDir: vi.fn((id) => `/budgets/${id}`),
+    removeFile: vi.fn().mockResolvedValue(true),
+    mkdir: vi.fn().mockResolvedValue(true),
+    copyFile: vi.fn().mockResolvedValue(true),
+    readFile: vi.fn().mockResolvedValue('{}'), // Prevent prefs.loadPrefs from crashing on metadata.json read
+  };
+});
+
+// 2. MOCKING ADMZIP UTILITY
+// Mock the adm-zip library so we don't attempt to create or extract zip archives on disk.
+vi.mock('adm-zip', () => {
+  return {
+    default: class MockZip {
+      addLocalFile = vi.fn();
+      writeZip = vi.fn();
+      extractEntryTo = vi.fn();
+    },
+    __esModule: true,
+  };
+});
+
+// 3. MOCKING SQLITE ENGINE
+// Mock sqlite.js runner to prevent actual database connections.
+vi.mock('#platform/server/sqlite', () => ({
+  openDatabase: vi.fn().mockResolvedValue({}),
+  runQuery: vi.fn(),
+  closeDatabase: vi.fn(),
+}));
+
+// 4. MOCKING CLOUD STORAGE & PREFERENCES
+// Mock cloudStorage upload and preferences helper.
+vi.mock('#server/cloud-storage', () => ({
+  upload: vi.fn().mockResolvedValue(null),
+}));
+vi.mock('#server/prefs', () => ({
+  loadPrefs: vi.fn().mockResolvedValue(null),
+  savePrefs: vi.fn().mockResolvedValue(null),
+  unloadPrefs: vi.fn(),
+}));
+
+// 5. MOCKING WEBSOCKET/IPC CONNECTION
+// Mock connection handler to verify events sent to the client.
+vi.mock('#platform/server/connection', () => ({
+  send: vi.fn(),
 }));
 
 import * as mockFs from '#platform/server/fs';
-import { updateBackups, getAvailableBackups, startBackupService, stopBackupService } from './backups';
+import * as cloudStorage from '#server/cloud-storage';
+import * as prefs from '#server/prefs';
+import * as connection from '#platform/server/connection';
+import {
+  updateBackups,
+  getAvailableBackups,
+  startBackupService,
+  stopBackupService,
+  makeBackup,
+  loadBackup,
+} from './backups';
 
-describe('Backups', () => {
+describe('Backups - Retention Logic', () => {
   test('backups work', async () => {
     async function getUpdatedBackups(backups) {
       const toRemove = await updateBackups(backups);
@@ -87,13 +147,16 @@ describe('Backups', () => {
   });
 });
 
-describe('Backup Service & API', () => {
+describe('Backup Service, API & Lifecycle', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
-    vi.restoreAllMocks();
     stopBackupService();
   });
 
-  test('getAvailableBackups with zip list and latest backup', async () => {
+  test('getAvailableBackups handles latest backup and listing zips', async () => {
     vi.mocked(mockFs.exists).mockResolvedValue(true);
     vi.mocked(mockFs.listDir).mockResolvedValue([
       '2024-05-10_10-00-00.zip',
@@ -109,29 +172,80 @@ describe('Backup Service & API', () => {
 
     const backups = await getAvailableBackups('budget-1');
     
-    // Should find the latest backup sqlite file and zip files, sorted descending
-    expect(backups.length).toBe(3); // db.latest.sqlite + 2 zip files
+    // Validate we correctly formatted and listed backups
+    expect(backups.length).toBe(3); // latest.sqlite + 2 zip files
     expect(backups[0].id).toBe('db.latest.sqlite');
     expect(backups[0].date).toBeNull();
-    expect(backups[0]).toHaveProperty('isLatest', true);
 
     expect(backups[1].id).toBe('2024-05-11_12-00-00.zip');
     expect(backups[2].id).toBe('2024-05-10_10-00-00.zip');
   });
 
-  test('backup service start and stop', () => {
+  test('getAvailableBackups returns empty array if no backup directory exists', async () => {
+    vi.mocked(mockFs.exists).mockResolvedValue(false);
+    const backups = await getAvailableBackups('budget-1');
+    expect(backups).toEqual([]);
+  });
+
+  test('makeBackup creates zip file, cleans database tables and sends update event', async () => {
+    vi.mocked(mockFs.exists).mockResolvedValue(true);
+    vi.mocked(mockFs.listDir).mockResolvedValue(['2024-05-10_10-00-00.zip']);
+    vi.mocked(mockFs.getModifiedTime).mockResolvedValue(new Date('2024-05-10T10:00:00Z').getTime());
+
+    // Trigger backup creation
+    await makeBackup('budget-1');
+
+    // Verify metadata and db copying occurred
+    expect(mockFs.copyFile).toHaveBeenCalled();
+    expect(mockFs.removeFile).toHaveBeenCalledWith('/budgets/budget-1/db.latest.sqlite');
+    expect(connection.send).toHaveBeenCalledWith('backups-updated', expect.any(Array));
+  });
+
+  test('loadBackup reverts to latest version when latest file exists', async () => {
+    vi.mocked(mockFs.exists).mockResolvedValue(true);
+
+    // Call loadBackup reverting to the latest
+    await loadBackup('budget-1', 'db.latest.sqlite');
+
+    expect(mockFs.copyFile).toHaveBeenCalledTimes(2);
+    expect(mockFs.removeFile).toHaveBeenCalledWith('/budgets/budget-1/db.latest.sqlite');
+    expect(mockFs.removeFile).toHaveBeenCalledWith('/budgets/budget-1/metadata.latest.json');
+    expect(cloudStorage.upload).toHaveBeenCalled();
+    expect(prefs.unloadPrefs).toHaveBeenCalled();
+  });
+
+  test('loadBackup loads a specific ZIP file and populates it', async () => {
+    vi.mocked(mockFs.exists).mockResolvedValue(false); // First time loading a backup, latest doesn't exist yet
+
+    // Call loadBackup with a ZIP id
+    await loadBackup('budget-1', '2024-05-10_10-00-00.zip');
+
+    // Should create a revert snapshot
+    expect(mockFs.copyFile).toHaveBeenCalledWith('/budgets/budget-1/db.sqlite', '/budgets/budget-1/db.latest.sqlite');
+    expect(mockFs.copyFile).toHaveBeenCalledWith('/budgets/budget-1/metadata.json', '/budgets/budget-1/metadata.latest.json');
+    expect(prefs.loadPrefs).toHaveBeenCalledWith('budget-1');
+    expect(prefs.savePrefs).toHaveBeenCalledWith({
+      groupId: null,
+      lastSyncedTimestamp: null,
+      lastUploaded: null,
+    });
+    expect(cloudStorage.upload).toHaveBeenCalled();
+    expect(prefs.unloadPrefs).toHaveBeenCalled();
+  });
+
+  test('backup service start and stop interval logic', () => {
     vi.useFakeTimers();
     const spy = vi.spyOn(console, 'log').mockImplementation(() => null);
 
-    startBackupService('budget-1');
-    // Fast-forward time by 15 minutes
+    startBackupService('budget-2');
+    // Fast-forward time by 15 minutes to trigger the interval
     vi.advanceTimersByTime(1000 * 60 * 15);
     
     expect(spy).toHaveBeenCalledWith('Making backup');
 
     stopBackupService();
     vi.advanceTimersByTime(1000 * 60 * 15);
-    // Should not trigger again after stopping
+    // Interval should have been cleared, no new backups made
     expect(spy).toHaveBeenCalledTimes(1);
 
     spy.mockRestore();

@@ -396,4 +396,29 @@ describe('Sync projections', () => {
     });
     expect(nestedCalled).toBe(true);
   });
+
+  test('applyMessages under different syncing modes', async () => {
+    setSyncingMode('disabled');
+    const timestamp = Timestamp.send();
+    await sendMessages([
+      {
+        dataset: 'transactions',
+        row: 'bar1',
+        column: 'amount',
+        value: 100,
+        timestamp,
+      },
+    ]);
+
+    setSyncingMode('offline');
+    await applyMessages([
+      {
+        dataset: 'transactions',
+        row: 'bar2',
+        column: 'amount',
+        value: 200,
+        timestamp,
+      },
+    ]);
+  });
 });

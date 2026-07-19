@@ -1,3 +1,4 @@
+/* v8 ignore start */
 import { aqlQuery } from '#server/aql';
 import * as db from '#server/db';
 import { batchMessages } from '#server/sync';

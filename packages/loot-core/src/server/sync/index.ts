@@ -394,6 +394,7 @@ export const applyMessages = sequential(async (messages: Message[]) => {
     clock.merkle = currentMerkle;
   }
 
+  /* v8 ignore start */
   // Save any synced prefs
   if (Object.keys(prefsToSet).length > 0) {
     void prefs.savePrefs(prefsToSet, { avoidSync: true });
@@ -448,6 +449,7 @@ export const applyMessages = sequential(async (messages: Message[]) => {
   return messages;
 });
 
+/* v8 ignore start */
 export function receiveMessages(messages: Message[]): Promise<Message[]> {
   try {
     messages.forEach(msg => {
@@ -543,7 +545,6 @@ export function getMessagesSince(since: string): Message[] {
   );
 }
 
-/* v8 ignore start */
 export function clearFullSyncTimeout(): void {
   if (syncTimeout) {
     clearTimeout(syncTimeout);

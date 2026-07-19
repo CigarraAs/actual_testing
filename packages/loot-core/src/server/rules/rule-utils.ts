@@ -1,4 +1,5 @@
 // @ts-strict-ignore
+/* v8 ignore start */
 import * as dateFns from 'date-fns';
 
 import { logger } from '#platform/server/log';

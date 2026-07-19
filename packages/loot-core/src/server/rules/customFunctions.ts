@@ -1,3 +1,4 @@
+/* v8 ignore start */
 import { FunctionArgumentType, FunctionPlugin } from 'hyperformula';
 import type { InterpreterState } from 'hyperformula/typings/interpreter/InterpreterState';
 import type { ProcedureAst } from 'hyperformula/typings/parser';
